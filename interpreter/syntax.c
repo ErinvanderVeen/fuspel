@@ -20,6 +20,15 @@ unsigned empty_args_list(arg_list* list) {
 	return !list;
 }
 
+unsigned char len_arg_list(arg_list* list) {
+	unsigned char i = 0;
+	while (list) {
+		i++;
+		list = list->rest;
+	}
+	return i;
+}
+
 void cpy_expression(expression* dst, expression* src) {
 	free_expression(dst);
 	dst->kind = src->kind;

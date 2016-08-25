@@ -1,10 +1,8 @@
 #include "eval.h"
 
-#include <stdio.h>
 #include <string.h>
 
 #include "mem.h"
-#include "print.h"
 
 void free_rules_until(fuspel* new, fuspel* old) {
 	while (new != old) {
@@ -113,7 +111,18 @@ unsigned match_expr(fuspel* rules, expression* to_match, expression* expr,
 	}
 }
 
-unsigned match_rule(fuspel* rules, rewrite_rule* rule, expression* expr,
+/**
+ * Return value:
+ *   < 0: rule does not match expr
+ *     n: rule matches expr; n arguments at the end cannot be touched
+ *
+ * E.g., a rule
+ *   f x y = (x,y)
+ * can be applied to
+ *   f 1 2 3 4
+ * but 2 arguments cannot be touched (3 and 4).
+ */
+char match_rule(fuspel* rules, rewrite_rule* rule, expression* expr,
 		replacements** repls) {
 	expression** expr_args;
 	unsigned char i;
@@ -121,19 +130,21 @@ unsigned match_rule(fuspel* rules, rewrite_rule* rule, expression* expr,
 	switch (expr->kind) {
 		case EXPR_NAME:
 			return (!strcmp(expr->var1, rule->name) &&
-				empty_args_list(rule->args)) ? 1 : 0;
+				empty_args_list(rule->args)) ? 0 : -1;
 		case EXPR_APP:
 			expr_args = flatten_app_args(expr);
 			i = 0;
 			if (!strcmp(expr_args[0]->var1, rule->name)) {
 				expression* _expr = expr_args[++i];
 				arg_list* args = rule->args;
+				unsigned char args_len = len_arg_list(args);
 				fuspel* _rules = rules;
+
 				while (!empty_args_list(args)) {
 					if (!match_expr(_rules, &args->elem, _expr, repls)) {
 						free_rules_until(_rules, rules);
 						my_free(expr_args);
-						return 0;
+						return -1;
 					}
 
 					args = args->rest;
@@ -142,16 +153,44 @@ unsigned match_rule(fuspel* rules, rewrite_rule* rule, expression* expr,
 					if (!empty_args_list(args) && !_expr) {
 						free_rules_until(_rules, rules);
 						my_free(expr_args);
-						return 0;
+						return -1;
 					}
 				}
+				while (_expr) _expr = expr_args[++i];
 				my_free(expr_args);
-				return 1;
+				return i - args_len - 1;
 			}
 			my_free(expr_args);
 		default:
-			return 0;
+			return -1;
 	}
+}
+
+/**
+ * If
+ *   app:  f x y
+ *   from: g 1 2 3 4
+ *   n:    3
+ *
+ * Then the result will be:
+ *         f x y 2 3 4
+ */
+expression* append_to_app(expression* app, expression* from, unsigned char n) {
+	expression *_from, *_app;
+	unsigned char i;
+	for (; n > 0; n--) {
+		_app = my_calloc(1, sizeof(expression));
+		_app->kind = EXPR_APP;
+		_app->var1 = app;
+		_app->var2 = my_calloc(1, sizeof(expression));
+
+		_from = from;
+		for (i = 1; i < n; i++) _from = _from->var1;
+		cpy_expression(_app->var2, _from->var2);
+
+		app = _app;
+	}
+	return app;
 }
 
 expression* eval_rnf(fuspel* rules, expression* expr) {
@@ -171,8 +210,12 @@ expression* eval_rnf(fuspel* rules, expression* expr) {
 		case EXPR_NAME:
 		case EXPR_APP:
 			while (_rules) {
-				if (match_rule(rules, &_rules->rule, expr, repls)) {
-					expression* old_result = result;
+				char skip_args;
+				if ((skip_args = match_rule(
+								rules, &_rules->rule, expr, repls)) >= 0) {
+					expression *old_result;
+					result = append_to_app(result, expr, skip_args);
+					old_result = result;
 					cpy_expression(result, &_rules->rule.rhs);
 					replace_all(*repls, result);
 					free_replacements(*repls);
@@ -211,10 +254,14 @@ expression* eval(fuspel* rules, expression* expr) {
 		case EXPR_NAME:
 		case EXPR_APP:
 			while (_rules) {
-				if (match_rule(rules, &_rules->rule, expr, repls)) {
-					expression* old_result = result;
+				char skip_args;
+				if ((skip_args = match_rule(
+								rules, &_rules->rule, expr, repls)) >= 0) {
+					expression *old_result;
 					cpy_expression(result, &_rules->rule.rhs);
 					replace_all(*repls, result);
+					result = append_to_app(result, expr, skip_args);
+					old_result = result;
 					result = eval(rules, result);
 					free_expression(old_result);
 					my_free(old_result);

@@ -62,6 +62,7 @@ typedef struct fuspel {
 } fuspel;
 
 unsigned empty_args_list(arg_list*);
+unsigned char len_arg_list(arg_list*);
 
 void cpy_expression(expression* dst, expression* src);
 unsigned eq_expression(expression*, expression*);
