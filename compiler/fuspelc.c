@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "error.h"
-#include "lex.h"
-#include "parse.h"
 #include "eval.h"
+#include "lex.h"
+#include "mem.h"
+#include "parse.h"
 #include "print.h"
 
 int main(void) {
@@ -16,20 +16,25 @@ int main(void) {
 		if (!fgets(program, 79, stdin)) {
 			if (feof(stdin))
 				break;
-			error(11, "Couldn't read input.");
+			fprintf(stderr, "Couldn't read input.");
+			exit(EXIT_FAILURE);
 		}
 
 		tokens = lex(tokens, program);
-		if (!tokens)
-			error(12, "Couldn't lex program.");
+		if (!tokens) {
+			fprintf(stderr, "Couldn't lex program.");
+			exit(EXIT_FAILURE);
+		}
 	}
 	
 	fuspel* pgm = parse(tokens);
 	free_token_list(tokens);
 	free(tokens);
 	
-	if (!pgm)
-		error(13, "Couldn't parse program.");
+	if (!pgm) {
+		fprintf(stderr, "Couldn't parse program.");
+		exit(EXIT_FAILURE);
+	}
 
 	printf("\nParsed program:\n");
 	print_fuspel(pgm);
@@ -38,9 +43,7 @@ int main(void) {
 	expression to_eval, *evaled;
 
 	to_eval.kind = EXPR_NAME;
-	to_eval.var1 = malloc(5);
-	if (!to_eval.var1)
-		error_no_mem();
+	to_eval.var1 = my_calloc(1, 5);
 	strcpy(to_eval.var1, "main");
 
 	evaled = eval(pgm, &to_eval);

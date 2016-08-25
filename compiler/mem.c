@@ -1,11 +1,13 @@
 #include "mem.h"
 
-#include "error.h"
+#include <stdio.h>
 
 void* my_calloc(size_t num, size_t size) {
 	void* ptr = calloc(num, size);
-	if (!ptr)
-		error_no_mem();
+	if (!ptr) {
+		perror(NULL);
+		exit(EXIT_FAILURE);
+	}
 	return ptr;
 }
 
