@@ -16,7 +16,7 @@ void print_token(token* tk) {
 		case TOKEN_EQUALS:    c = '='; break;
 		case TOKEN_COMMA:     c = ','; break;
 		case TOKEN_NAME:
-			printf("%s", tk->var);
+			printf("%s", (char*) tk->var);
 			return;
 		case TOKEN_INT:
 			printf("%d", *((int*) tk->var));

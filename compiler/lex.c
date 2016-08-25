@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "error.h"
+#include "mem.h"
 
 inline unsigned is_space_char(char input) {
 	return input == '\t' || input == ' ' || input == '\n' || input == '\r';
@@ -39,9 +39,7 @@ token_list* lex(char* input) {
 		return NULL;
 	}
 	
-	token_list* list = malloc(sizeof(token_list));
-	if (!list)
-		error_no_mem();
+	token_list* list = my_calloc(1, sizeof(token_list));
 	token_list* first_list = list;
 
 	while (*input) {
@@ -63,27 +61,23 @@ token_list* lex(char* input) {
 				if (is_int_char(*input)) {
 					list->elem.kind = TOKEN_INT;
 					unsigned char len = lex_int_length(input);
-					char* s = calloc(1, len + 1);
-					list->elem.var = calloc(1, sizeof(int));
-					if (!s || !list->elem.var)
-						error_no_mem();
+					char* s = my_calloc(1, len + 1);
+					list->elem.var = my_calloc(1, sizeof(int));
 					strncpy(s, input, len);
 					*((int*) list->elem.var) = atoi(s);
-					free(s);
+					my_free(s);
 					input += len - 1;
 				} else if (is_name_char(*input)) {
 					list->elem.kind = TOKEN_NAME;
 					unsigned char len = lex_name_length(input);
-					list->elem.var = calloc(1, len + 1);
-					if (!list->elem.var)
-						error_no_mem();
+					list->elem.var = my_calloc(1, len + 1);
 					strncpy(list->elem.var, input, len);
 					input += len - 1;
 				} else if (is_space_char(*input)) {
 					proceed_to_next_token = 0;
 				} else {
 					free_token_list(first_list);
-					free(first_list);
+					my_free(first_list);
 					return NULL;
 				}
 		}
@@ -91,9 +85,7 @@ token_list* lex(char* input) {
 		input++;
 
 		if (*input && proceed_to_next_token) {
-			list->rest = calloc(1, sizeof(token_list));
-			if (!list->rest)
-				error_no_mem();
+			list->rest = my_calloc(1, sizeof(token_list));
 			list = list->rest;
 		}
 	}

@@ -4,13 +4,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "log.h"
+#include "mem.h"
+
 token_list* parse_name(char** name, token_list* list) {
 	if (list->elem.kind != TOKEN_NAME)
 		return NULL;
 
-	*name = calloc(1, strlen(list->elem.var) + 1);
-	if (!*name)
-		error_no_mem();
+	*name = my_calloc(1, strlen(list->elem.var) + 1);
 
 	strcpy(*name, list->elem.var);
 
@@ -21,9 +22,7 @@ token_list* parse_simple_expression(expression* expr, token_list* list) {
 	switch (list->elem.kind) {
 		case TOKEN_INT:
 			expr->kind = EXPR_INT;
-			expr->var1 = calloc(1, sizeof(int));
-			if(!expr->var1)
-				error_no_mem();
+			expr->var1 = my_calloc(1, sizeof(int));
 			*((int*) expr->var1) = *((int*) list->elem.var);
 			return list->rest;
 
@@ -43,20 +42,16 @@ token_list* parse_simple_expression(expression* expr, token_list* list) {
 					return list->rest;
 					break;
 				case TOKEN_COMMA:
-					_expr = calloc(1, sizeof(expression));
-					if (!_expr)
-						error_no_mem();
+					_expr = my_calloc(1, sizeof(expression));
 					cpy_expression(_expr, expr);
 					free_expression(expr);
 					expr->kind = EXPR_TUPLE;
 					expr->var1 = _expr;
-					expr->var2 = calloc(1, sizeof(expression));
-					if (!expr->var2)
-						error_no_mem();
+					expr->var2 = my_calloc(1, sizeof(expression));
 					list = parse_simple_expression(expr->var2, list->rest);
 					if (!list || list->elem.kind != TOKEN_CLOSE_P) {
 						free_expression(_expr);
-						free(_expr);
+						my_free(_expr);
 						return NULL;
 					} else {
 						return list->rest;
@@ -76,16 +71,14 @@ token_list* parse_simple_expression(expression* expr, token_list* list) {
 			if (list->elem.kind == TOKEN_CLOSE_SQ)
 				return list->rest;
 
-			expr->var1 = calloc(1, sizeof(expression));
-			expr->var2 = calloc(1, sizeof(expression));
-			if (!expr->var1 || !expr->var2)
-				error_no_mem();
+			expr->var1 = my_calloc(1, sizeof(expression));
+			expr->var2 = my_calloc(1, sizeof(expression));
 
 			list = parse_simple_expression(expr->var1, list);
 
 			if (!list || list->elem.kind != TOKEN_COLON) {
 				free_expression(expr->var1);
-				free(expr->var1);
+				my_free(expr->var1);
 				return NULL;
 			}
 			
@@ -93,9 +86,9 @@ token_list* parse_simple_expression(expression* expr, token_list* list) {
 				
 			if (!list || list->elem.kind != TOKEN_CLOSE_SQ) {
 				free_expression(expr->var1);
-				free(expr->var1);
+				my_free(expr->var1);
 				free_expression(expr->var2);
-				free(expr->var2);
+				my_free(expr->var2);
 				return NULL;
 			}
 
@@ -112,9 +105,7 @@ token_list* parse_arg_list(arg_list** args, token_list* list) {
 	if (list->elem.kind == TOKEN_EQUALS)
 		return list;
 
-	*args = calloc(1, sizeof(arg_list));
-	if (!*args)
-		error_no_mem();
+	*args = my_calloc(1, sizeof(arg_list));
 
 	list = parse_simple_expression(&(*args)->elem, list);
 	if (!list)
@@ -134,18 +125,14 @@ token_list* parse_expression_no_app(expression* expr, token_list* list) {
 			if (_list->elem.kind == TOKEN_CLOSE_P) {
 				return _list->rest;
 			} else if (_list->elem.kind == TOKEN_COMMA) {
-				expression* _expr = calloc(1, sizeof(expression));
-				if (!_expr)
-					error_no_mem();
+				expression* _expr = my_calloc(1, sizeof(expression));
 
 				cpy_expression(_expr, expr);
 				free_expression(expr);
 				expr->kind = EXPR_TUPLE;
 				expr->var1 = _expr;
 
-				expr->var2 = calloc(1, sizeof(expression));
-				if (!expr->var2)
-					error_no_mem();
+				expr->var2 = my_calloc(1, sizeof(expression));
 
 				_list = parse_expression(expr->var2, _list->rest);
 				if (_list && _list->elem.kind == TOKEN_CLOSE_P) {
@@ -161,23 +148,21 @@ token_list* parse_expression_no_app(expression* expr, token_list* list) {
 			return list->rest->rest;
 		}
 
-		expression* expr1 = calloc(1, sizeof(expression));
-		expression* expr2 = calloc(1, sizeof(expression));
-		if (!expr1 || !expr2)
-			error_no_mem();
+		expression* expr1 = my_calloc(1, sizeof(expression));
+		expression* expr2 = my_calloc(1, sizeof(expression));
 
 		token_list* _list = parse_expression(expr1, list->rest);
 		if (!_list || _list->elem.kind != TOKEN_COLON) {
 			free_expression(expr1);
-			free(expr1);
-			free(expr2);
+			my_free(expr1);
+			my_free(expr2);
 		} else {
 			_list = parse_expression(expr2, _list->rest);
 			if (!_list || _list->elem.kind != TOKEN_CLOSE_SQ) {
 				free_expression(expr1);
 				free_expression(expr2);
-				free(expr1);
-				free(expr2);
+				my_free(expr1);
+				my_free(expr2);
 			} else {
 				expr->var1 = expr1;
 				expr->var2 = expr2;
@@ -204,18 +189,14 @@ token_list* parse_expression(expression* expr, token_list* list) {
 			list->elem.kind != TOKEN_COLON &&
 			list->elem.kind != TOKEN_COMMA) {
 	
-		expression* _expr = calloc(1, sizeof(expression));
-		if (!_expr)
-			error_no_mem();
+		expression* _expr = my_calloc(1, sizeof(expression));
 
 		cpy_expression(_expr, expr);
 		free_expression(expr);
 		expr->kind = EXPR_APP;
 		expr->var1 = _expr;
 
-		expr->var2 = calloc(1, sizeof(expression));
-		if (!expr->var2)
-			error_no_mem();
+		expr->var2 = my_calloc(1, sizeof(expression));
 
 		list = parse_expression_no_app(expr->var2, list);
 		if (!list) {
@@ -235,13 +216,13 @@ token_list* parse_rule(rewrite_rule* rule, token_list* list) {
 	list = parse_arg_list(&rule->args, list);
 	if (!list) {
 		log_debug("parse_rule: error in arg_list");
-		free(rule->name);
+		my_free(rule->name);
 		return NULL;
 	}
 
 	if (list->elem.kind != TOKEN_EQUALS) {
 		log_debug("parse_rule: no =");
-		free(rule->name);
+		my_free(rule->name);
 		free_arg_list(rule->args);
 		return NULL;
 	}
@@ -258,7 +239,7 @@ fuspel* parse(token_list* list) {
 	if (!list)
 		return NULL;
 
-	fuspel* rules = calloc(1, sizeof(fuspel));
+	fuspel* rules = my_calloc(1, sizeof(fuspel));
 
 	list = parse_rule(&rules->rule, list);
 	if (!list)

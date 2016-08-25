@@ -3,8 +3,12 @@
 
 #define LOG_DEBUG 1
 
-#define LOG_LEVEL 0
+#define LOG_LEVEL 10
 
+#if(LOG_LEVEL >= LOG_DEBUG)
+#define log_debug(x)
+#else
 void log_debug(char*);
+#endif
 
 #endif
