@@ -15,6 +15,9 @@ void print_token(token* tk) {
 		case TOKEN_CLOSE_SQ:  c = ']'; break;
 		case TOKEN_EQUALS:    c = '='; break;
 		case TOKEN_COMMA:     c = ','; break;
+		case TOKEN_CODE:
+			printf("code ");
+			return;
 		case TOKEN_NAME:
 			printf("%s", (char*) tk->var);
 			return;
@@ -40,6 +43,10 @@ void print_expression(expression* expr) {
 			break;
 		case EXPR_NAME:
 			printf("%s", (char*) expr->var1);
+			break;
+		case EXPR_CODE:
+			printf("code [%p, %d args]",
+					(void*) expr->var1, *((unsigned char*) expr->var2));
 			break;
 		case EXPR_LIST:
 			if (!expr->var1) {

@@ -39,9 +39,9 @@ int main(void) {
 		exit(EXIT_FAILURE);
 	}
 
-	printf("\nParsed program:\n");
+	printf("\n");
 	print_fuspel(pgm);
-	printf("\n\n\n");
+	printf("\n\n");
 
 	to_eval.kind = EXPR_NAME;
 	to_eval.var1 = my_calloc(1, 5);

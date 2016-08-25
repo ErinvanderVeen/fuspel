@@ -2,6 +2,7 @@
 
 #include <string.h>
 
+#include "code.h"
 #include "mem.h"
 
 void free_rules_until(fuspel* new, fuspel* old) {
@@ -30,6 +31,7 @@ void replace(char* name, expression* new, expression* expr) {
 				break;
 			}
 		case EXPR_INT:
+		case EXPR_CODE:
 			break;
 		case EXPR_TUPLE:
 		case EXPR_LIST:
@@ -193,7 +195,56 @@ expression* append_to_app(expression* app, expression* from, unsigned char n) {
 	return app;
 }
 
+expression* eval_code(fuspel* rules, expression* expr) {
+	expression *root, *result, **args;
+	Code_1* f1; Code_2* f2;
+	expression *a1, *a2;
+	unsigned char args_len;
+
+	for (root = expr; root->kind == EXPR_APP; root = root->var1);
+	if (root->kind != EXPR_CODE) {
+		return NULL;
+	}
+
+	args = flatten_app_args(expr);
+
+	switch (*((unsigned char*) root->var2)) {
+		case 1:
+			f1 = (Code_1*) root->var1;
+			a1 = eval(rules, args[1]);
+			if (!a1) {
+				my_free(a1);
+				my_free(args);
+				return NULL;
+			}
+			result = f1(a1);
+			break;
+		case 2:
+			f2 = (Code_2*) root->var1;
+			a1 = eval(rules, args[1]);
+			a2 = eval(rules, args[2]);
+			if (!a1 || !a2) {
+				my_free(a1);
+				my_free(a2);
+				my_free(args);
+				return NULL;
+			}
+			result = f2(a1, a2);
+			break;
+	}
+
+	for (args_len = 0; args[args_len]; args_len++);
+	append_to_app(result, expr, args_len - *((unsigned char*) root->var2));
+
+	my_free(args);
+	my_free(a1);
+	my_free(a2);
+
+	return result;
+}
+
 expression* eval_rnf(fuspel* rules, expression* expr) {
+	expression* code_result;
 	expression* result = my_calloc(1, sizeof(expression));
 
 	fuspel* _rules = rules;
@@ -204,11 +255,19 @@ expression* eval_rnf(fuspel* rules, expression* expr) {
 		case EXPR_INT:
 		case EXPR_TUPLE:
 		case EXPR_LIST:
+		case EXPR_CODE:
 			cpy_expression(result, expr);
 			break;
 
 		case EXPR_NAME:
 		case EXPR_APP:
+			code_result = eval_code(rules, expr);
+			if (code_result) {
+				my_free(result);
+				result = code_result;
+				break;
+			}
+
 			while (_rules) {
 				char skip_args;
 				if ((skip_args = match_rule(
@@ -244,6 +303,7 @@ expression* eval(fuspel* rules, expression* expr) {
 	expression *e1, *e2;
 	fuspel* _rules = rules;
 	expression* result = my_calloc(1, sizeof(expression));
+	expression* code_result;
 	replacements** repls = my_calloc(1, sizeof(replacements*));
 
 	switch (expr->kind) {
@@ -251,8 +311,25 @@ expression* eval(fuspel* rules, expression* expr) {
 			cpy_expression(result, expr);
 			break;
 
+		case EXPR_CODE:
+			if (*((unsigned char*) expr->var2) == 0) {
+				Code_0* code_fun = (Code_0*) expr->var1;
+				my_free(result);
+				result = code_fun();
+			} else {
+				cpy_expression(result, expr);
+			}
+			break;
+
 		case EXPR_NAME:
 		case EXPR_APP:
+			code_result = eval_code(rules, expr);
+			if (code_result) {
+				my_free(result);
+				result = code_result;
+				break;
+			}
+
 			while (_rules) {
 				char skip_args;
 				if ((skip_args = match_rule(

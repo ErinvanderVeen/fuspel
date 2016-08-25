@@ -41,6 +41,11 @@ void cpy_expression(expression* dst, expression* src) {
 			dst->var1 = my_calloc(1, strlen((char*) src->var1) + 1);
 			strcpy(dst->var1, src->var1);
 			break;
+		case EXPR_CODE:
+			dst->var1 = src->var1;
+			dst->var2 = my_calloc(1, sizeof(unsigned char));
+			*((unsigned char*) dst->var2) = *((unsigned char*) src->var2);
+			break;
 		case EXPR_LIST:
 			if (!src->var1)
 				break;
@@ -61,6 +66,7 @@ unsigned eq_expression(expression* a, expression* b) {
 	switch (a->kind) {
 		case EXPR_INT:  return *((int*) a->var1) == *((int*) b->var1);
 		case EXPR_NAME: return !strcmp(a->var1, b->var1);
+		case EXPR_CODE: return a->var1 == b->var1;
 		case EXPR_TUPLE:
 		case EXPR_LIST:
 		case EXPR_APP:
@@ -138,6 +144,9 @@ void free_expression(expression* expr) {
 		case EXPR_INT:
 		case EXPR_NAME:
 			my_free(expr->var1);
+			break;
+		case EXPR_CODE:
+			my_free(expr->var2);
 			break;
 		case EXPR_LIST:
 		case EXPR_TUPLE:

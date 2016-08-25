@@ -49,7 +49,7 @@ token_list* lex(token_list* list, char* input) {
 	}
 
 	while (*input) {
-		unsigned proceed_to_next_token = 1;
+		unsigned create_new_token = 1;
 
 		list->elem.var = NULL;
 
@@ -62,6 +62,13 @@ token_list* lex(token_list* list, char* input) {
 			case ']': list->elem.kind = TOKEN_CLOSE_SQ;  break;
 			case '=': list->elem.kind = TOKEN_EQUALS;    break;
 			case ',': list->elem.kind = TOKEN_COMMA;     break;
+			case 'c':
+				if (input[1] == 'o' && input[2] == 'd' && input[3] == 'e' &&
+						is_space_char(input[4])) {
+					list->elem.kind = TOKEN_CODE;
+					input += 4;
+				}
+				break;
 	
 			default:
 				if (is_int_char(*input)) {
@@ -81,7 +88,7 @@ token_list* lex(token_list* list, char* input) {
 					strncpy(list->elem.var, input, len);
 					input += len - 1;
 				} else if (is_space_char(*input)) {
-					proceed_to_next_token = 0;
+					create_new_token = 0;
 				} else {
 					free_token_list(first_list);
 					my_free(first_list);
@@ -91,7 +98,7 @@ token_list* lex(token_list* list, char* input) {
 
 		input++;
 
-		if (*input && proceed_to_next_token) {
+		if (*input && create_new_token) {
 			list->rest = my_calloc(1, sizeof(token_list));
 			list = list->rest;
 		}

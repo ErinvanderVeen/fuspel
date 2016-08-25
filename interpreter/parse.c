@@ -2,6 +2,7 @@
 
 #include <string.h>
 
+#include "code.h"
 #include "log.h"
 #include "mem.h"
 
@@ -29,6 +30,19 @@ token_list* parse_simple_expression(expression* expr, token_list* list) {
 			expr->kind = EXPR_NAME;
 			list = parse_name((char**) &expr->var1, list);
 			return list;
+
+		case TOKEN_CODE:
+			if (list->rest && list->rest->elem.kind == TOKEN_NAME) {
+				char* name;
+				expr->kind = EXPR_CODE;
+				list = parse_name(&name, list->rest);
+				expr->var2 = my_calloc(1, sizeof(unsigned char));
+				*((unsigned char*) expr->var2) = code_find(name, &expr->var1);
+				my_free(name);
+				return list;
+			} else {
+				return NULL;
+			}
 
 		case TOKEN_OPEN_P:
 			list = parse_simple_expression(expr, list->rest);

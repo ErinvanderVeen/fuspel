@@ -12,6 +12,7 @@ typedef enum {
 	TOKEN_CLOSE_P,   /* ) */
 	TOKEN_COMMA,     /* , */
 	TOKEN_COLON,     /* : */
+	TOKEN_CODE,      /* code */
 	TOKEN_NAME,
 	TOKEN_INT
 } token_kind;
@@ -34,6 +35,7 @@ void free_token_list(token_list*);
 typedef enum {
 	EXPR_INT,
 	EXPR_NAME,
+	EXPR_CODE,
 	EXPR_LIST,
 	EXPR_TUPLE,
 	EXPR_APP
