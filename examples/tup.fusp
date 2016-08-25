@@ -1,0 +1,3 @@
+tup a b = (a,b);
+app f a b = f a b;
+main = app app app app tup 1 2;
