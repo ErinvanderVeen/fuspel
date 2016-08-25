@@ -1,0 +1,11 @@
+append []     ys = ys;
+append [x:xs] ys = [x:append xs ys];
+
+flatten []    = [];
+flatten [h:t] = append h (flatten t);
+
+isEmpty [] = 1;
+isEmpty _  = 0;
+
+hd [x:_] = x;
+tl [_:x] = x;
