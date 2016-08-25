@@ -4,6 +4,8 @@ DEPS=lex.h syntax.h print.h parse.h log.h eval.h mem.h
 OBJ=fuspelc.o lex.o syntax.o print.o parse.o log.o eval.o mem.o
 EXE=fuspelc
 
+.PHONY: all clean
+
 all: $(EXE)
 
 $(EXE): $(OBJ)
@@ -14,5 +16,3 @@ $(EXE): $(OBJ)
 
 clean:
 	$(RM) -v $(OBJ) $(EXE)
-
-.PHONY: all clean
