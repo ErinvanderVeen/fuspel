@@ -10,10 +10,10 @@ void free_token(token* tk) {
 }
 
 void free_token_list(token_list* list) {
-	if (list->rest) {
-		free_token_list(list->rest);
-	}
 	free_token(&list->elem);
+	if (list->rest)
+		free_token_list(list->rest);
+	free(list->rest);
 }
 
 unsigned empty_args_list(arg_list* list) {
@@ -135,19 +135,30 @@ void free_expression(expression* expr) {
 		case EXPR_APP:
 			free_expression(expr->var1);
 			free_expression(expr->var2);
+			free(expr->var1);
+			free(expr->var2);
 			break;
 	}
 }
 
 void free_arg_list(arg_list* list) {
+	free_expression(&list->elem);
 	if (list->rest)
 		free_arg_list(list->rest);
-	free_expression(&list->elem);
+	free(list->rest);
 }
 
 void free_rewrite_rule(rewrite_rule* rule) {
 	free(rule->name);
 	if (rule->args)
 		free_arg_list(rule->args);
+	free(rule->args);
 	free_expression(&rule->rhs);
+}
+
+void free_fuspel(fuspel* rules) {
+	free_rewrite_rule(&rules->rule);
+	if (rules->rest)
+		free_fuspel(rules->rest);
+	free(rules->rest);
 }

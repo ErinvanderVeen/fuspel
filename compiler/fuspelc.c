@@ -8,6 +8,14 @@
 #include "eval.h"
 #include "print.h"
 
+//static char* program =
+//	"take_one [x:_] = [x:[]];"
+//	"inflist = [1:inflist];"
+//	"main = take_one inflist;";
+//static char* program =
+//	"append []     ys = ys;"
+//	"append [x:xs] ys = [x:append xs ys];"
+//	"main = append [1:[2:[3:[]]]] [5:[6:[]]];";
 static char* program =
 	"singleton x = [x:[]];"
 	"push x y = [x:y];"
@@ -52,6 +60,7 @@ int main(void) {
 	strcpy(to_eval.var1, "main");
 
 	evaled = eval(pgm, &to_eval);
+	free_expression(&to_eval);
 	if (evaled) {
 		print_expression(evaled);
 		printf("\n");
@@ -59,6 +68,9 @@ int main(void) {
 		free_expression(evaled);
 		free(evaled);
 	}
+
+	free_fuspel(pgm);
+	free(pgm);
 
 	return 0;
 }

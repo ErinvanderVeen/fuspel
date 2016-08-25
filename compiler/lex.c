@@ -63,7 +63,7 @@ token_list* lex(char* input) {
 				if (is_int_char(*input)) {
 					list->elem.kind = TOKEN_INT;
 					unsigned char len = lex_int_length(input);
-					char* s = malloc(len);
+					char* s = calloc(1, len + 1);
 					list->elem.var = calloc(1, sizeof(int));
 					if (!s || !list->elem.var)
 						error_no_mem();
@@ -91,7 +91,7 @@ token_list* lex(char* input) {
 		input++;
 
 		if (*input && proceed_to_next_token) {
-			list->rest = malloc(sizeof(token_list));
+			list->rest = calloc(1, sizeof(token_list));
 			if (!list->rest)
 				error_no_mem();
 			list = list->rest;

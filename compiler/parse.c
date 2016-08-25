@@ -47,6 +47,7 @@ token_list* parse_simple_expression(expression* expr, token_list* list) {
 					if (!_expr)
 						error_no_mem();
 					cpy_expression(_expr, expr);
+					free_expression(expr);
 					expr->kind = EXPR_TUPLE;
 					expr->var1 = _expr;
 					expr->var2 = calloc(1, sizeof(expression));
@@ -138,6 +139,7 @@ token_list* parse_expression_no_app(expression* expr, token_list* list) {
 					error_no_mem();
 
 				cpy_expression(_expr, expr);
+				free_expression(expr);
 				expr->kind = EXPR_TUPLE;
 				expr->var1 = _expr;
 
@@ -166,11 +168,15 @@ token_list* parse_expression_no_app(expression* expr, token_list* list) {
 
 		token_list* _list = parse_expression(expr1, list->rest);
 		if (!_list || _list->elem.kind != TOKEN_COLON) {
+			free_expression(expr1);
 			free(expr1);
+			free(expr2);
 		} else {
 			_list = parse_expression(expr2, _list->rest);
 			if (!_list || _list->elem.kind != TOKEN_CLOSE_SQ) {
 				free_expression(expr1);
+				free_expression(expr2);
+				free(expr1);
 				free(expr2);
 			} else {
 				expr->var1 = expr1;
@@ -203,6 +209,7 @@ token_list* parse_expression(expression* expr, token_list* list) {
 			error_no_mem();
 
 		cpy_expression(_expr, expr);
+		free_expression(expr);
 		expr->kind = EXPR_APP;
 		expr->var1 = _expr;
 

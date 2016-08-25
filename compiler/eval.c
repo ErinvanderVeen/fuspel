@@ -9,7 +9,9 @@
 void free_rules_until(fuspel* new, fuspel* old) {
 	while (new != old) {
 		free_rewrite_rule(&new->rule);
-		new = new->rest;
+		fuspel* _new = new->rest;
+		free(new);
+		new = _new;
 	}
 }
 
@@ -88,12 +90,14 @@ fuspel* match_rule(fuspel* rules, rewrite_rule* rule, expression* expr) {
 
 					if (!empty_args_list(args) && !_expr) {
 						free_rules_until(_rules, rules);
+						free(expr_args);
 						return NULL;
 					}
 				}
 				free(expr_args);
 				return _rules;
 			}
+			free(expr_args);
 		default:
 			return NULL;
 	}
@@ -134,8 +138,9 @@ expression* eval_rnf(fuspel* rules, expression* expr) {
 				new_rules = match_rule(rules, &_rules->rule, expr);
 				if (new_rules) {
 					rules = new_rules;
+					free(result);
 					result = eval_rnf(rules, &_rules->rule.rhs);
-					free_rules_until(new_rules, _rules);
+					free_rules_until(new_rules, rules);
 					return result;
 				}
 				_rules = _rules->rest;
@@ -154,7 +159,6 @@ expression* eval(fuspel* rules, expression* expr) {
 
 	expression *e1, *e2;
 	fuspel* _rules = rules;
-	fuspel* new_rules;
 
 	switch (expr->kind) {
 		case EXPR_INT:
@@ -164,9 +168,9 @@ expression* eval(fuspel* rules, expression* expr) {
 		case EXPR_NAME:
 		case EXPR_APP:
 			while (_rules) {
-				new_rules = match_rule(rules, &_rules->rule, expr);
+				fuspel* new_rules = match_rule(rules, &_rules->rule, expr);
 				if (new_rules) {
-					rules = new_rules;
+					free(result);
 					result = eval(new_rules, &_rules->rule.rhs);
 					free_rules_until(new_rules, rules);
 					return result;

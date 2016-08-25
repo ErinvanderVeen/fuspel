@@ -75,5 +75,6 @@ fuspel* popn_fuspel(fuspel*, unsigned char);
 void free_expression(expression*);
 void free_arg_list(arg_list*);
 void free_rewrite_rule(rewrite_rule*);
+void free_fuspel(fuspel*);
 
 #endif
