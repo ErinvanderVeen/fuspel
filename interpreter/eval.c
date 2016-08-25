@@ -81,8 +81,6 @@ unsigned match_expr(fuspel* rules, expression* to_match, expression* expr,
 	switch (to_match->kind) {
 		case EXPR_NAME:
 			*repls = push_replacement(to_match->var1, expr, *repls);
-			free_expression(expr);
-			my_free(expr);
 			return 1;
 		case EXPR_INT:
 			matches = eq_expression(to_match, expr);
@@ -205,10 +203,6 @@ expression* eval(fuspel* rules, expression* expr) {
 	expression* result = my_calloc(1, sizeof(expression));
 	replacements** repls = my_calloc(1, sizeof(replacements*));
 
-	printf("Evaluating: ");
-	print_expression(expr);
-	printf("\n");
-
 	switch (expr->kind) {
 		case EXPR_INT:
 			cpy_expression(result, expr);
@@ -221,7 +215,7 @@ expression* eval(fuspel* rules, expression* expr) {
 					expression* old_result = result;
 					cpy_expression(result, &_rules->rule.rhs);
 					replace_all(*repls, result);
-					result = eval(rules, old_result);
+					result = eval(rules, result);
 					free_expression(old_result);
 					my_free(old_result);
 					free_replacements(*repls);

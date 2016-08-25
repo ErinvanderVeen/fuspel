@@ -15,4 +15,4 @@ $(EXE): $(OBJ)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 clean:
-	$(RM) -v $(OBJ) $(EXE)
+	$(RM) $(OBJ) $(EXE)
