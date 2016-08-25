@@ -1,0 +1,40 @@
+\section{Grammar}
+\label{sec:grammar}
+
+\setlength{\grammarparsep}{4pt}
+\setlength{\grammarindent}{10em}
+\begin{grammar}
+	<Fuspel> ::= <Rewrite-list>
+
+	<Rewrite-list> ::= <Rewrite> `;' <Rewrite-list> | <empty>
+
+	<Rewrite> ::= <Name> <Arg-list> `=' <Rhs>
+
+	<Arg-list> ::= <Arg> ` ' <Arg-list> | <empty>
+
+	<Arg> ::= <Simple-expr>
+
+	<Simple-expr> ::= <Int>
+		\alt <Name>
+		\alt <Simple-list>
+		\alt <Simple-tuple>
+
+	<Simple-list> ::= `[' <Simple-expr> `:' <Simple-list> `]'
+		\alt `[]'
+	
+	<Simple-tuple> ::= `(' <Simple-expr> `,' <Simple-expr> `)'
+
+	<Rhs> ::= <Expr>
+
+	<Expr> ::= <Int>
+		\alt <Name>
+		\alt <List>
+		\alt <Tuple>
+		\alt <Expr> <Expr>
+		\alt `(' <Expr> `)'
+
+	<List> ::= `[' <Expr> `:' <List> `]'
+		\alt `[]'
+	
+	<Tuple> ::= `(' <Simple-expr> `,' <Simple-expr> `)'
+\end{grammar}
