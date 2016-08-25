@@ -3,6 +3,7 @@
 
 #include "syntax.h"
 
+expression* eval_rnf(fuspel*, expression*);
 expression* eval(fuspel*, expression*);
 
 #endif

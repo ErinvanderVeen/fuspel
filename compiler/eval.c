@@ -14,6 +14,12 @@ void free_rules_until(fuspel* new, fuspel* old) {
 }
 
 fuspel* match_expr(fuspel* rules, expression* to_match, expression* expr) {
+	if (to_match->kind != EXPR_NAME) {
+		expr = eval_rnf(rules, expr);
+		if (!expr)
+			return NULL;
+	}
+
 	switch (to_match->kind) {
 		case EXPR_NAME:
 			rules = push_fuspel(rules);
@@ -25,17 +31,33 @@ fuspel* match_expr(fuspel* rules, expression* to_match, expression* expr) {
 			cpy_expression(&rules->rule.rhs, expr);
 			return rules;
 		case EXPR_INT:
-			return eq_expression(to_match, expr) ? rules : NULL;
+			;unsigned matches = eq_expression(to_match, expr);
+			free_expression(expr);
+			free(expr);
+			return matches ? rules : NULL;
+		case EXPR_LIST:
+			if (!to_match->var1) { // empty list
+				unsigned matches = eq_expression(to_match, expr);
+				free_expression(expr);
+				free(expr);
+				return matches ? rules : NULL;
+			}
 		case EXPR_TUPLE:
 			;fuspel* _rules = match_expr(rules, to_match->var1, expr->var1);
-			if (!_rules)
+			if (!_rules) {
+				free_expression(expr);
+				free(expr);
 				return NULL;
+			}
 			fuspel* __rules = match_expr(_rules, to_match->var2, expr->var2);
 			if (!__rules)
 				free_rules_until(_rules, rules);
+			free_expression(expr);
+			free(expr);
 			return __rules;
 		default:
-			// TODO
+			free_expression(expr);
+			free(expr);
 			return NULL;
 	}
 }
@@ -90,6 +112,41 @@ unsigned apply(expression* result, rewrite_rule* rule, expression* expr) {
 	}
 }
 
+expression* eval_rnf(fuspel* rules, expression* expr) {
+	expression* result = calloc(1, sizeof(expression));
+	if (!result)
+		error_no_mem();
+
+	expression *e1, *e2;
+	fuspel* _rules = rules;
+	fuspel* new_rules;
+
+	switch (expr->kind) {
+		case EXPR_INT:
+		case EXPR_TUPLE:
+		case EXPR_LIST:
+			cpy_expression(result, expr);
+			break;
+
+		case EXPR_NAME:
+		case EXPR_APP:
+			while (_rules) {
+				new_rules = match_rule(rules, &_rules->rule, expr);
+				if (new_rules) {
+					rules = new_rules;
+					result = eval_rnf(rules, &_rules->rule.rhs);
+					free_rules_until(new_rules, _rules);
+					return result;
+				}
+				_rules = _rules->rest;
+			}
+			cpy_expression(result, expr);
+			break;
+	}
+
+	return result;
+}
+
 expression* eval(fuspel* rules, expression* expr) {
 	expression* result = calloc(1, sizeof(expression));
 	if (!result)
@@ -110,12 +167,13 @@ expression* eval(fuspel* rules, expression* expr) {
 				new_rules = match_rule(rules, &_rules->rule, expr);
 				if (new_rules) {
 					rules = new_rules;
-					result = eval(rules, &_rules->rule.rhs);
-					break;
+					result = eval(new_rules, &_rules->rule.rhs);
+					free_rules_until(new_rules, rules);
+					return result;
 				}
 				_rules = _rules->rest;
-				cpy_expression(result, expr);
 			}
+			cpy_expression(result, expr);
 			break;
 
 		case EXPR_LIST:
