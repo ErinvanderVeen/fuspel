@@ -1,17 +1,17 @@
 #ifndef _H_SYNTAX
 #define _H_SYNTAX
 
-// TOKENS
+/* TOKENS */
 
 typedef enum {
-	TOKEN_SEMICOLON, // ;
-	TOKEN_EQUALS,    // =
-	TOKEN_OPEN_SQ,   // [
-	TOKEN_CLOSE_SQ,  // ]
-	TOKEN_OPEN_P,    // (
-	TOKEN_CLOSE_P,   // )
-	TOKEN_COMMA,     // ,
-	TOKEN_COLON,     // :
+	TOKEN_SEMICOLON, /* ; */
+	TOKEN_EQUALS,    /* = */
+	TOKEN_OPEN_SQ,   /* [ */
+	TOKEN_CLOSE_SQ,  /* ] */
+	TOKEN_OPEN_P,    /* ( */
+	TOKEN_CLOSE_P,   /* ) */
+	TOKEN_COMMA,     /* , */
+	TOKEN_COLON,     /* : */
 	TOKEN_NAME,
 	TOKEN_INT
 } token_kind;
@@ -29,7 +29,7 @@ typedef struct token_list {
 void free_token(token*);
 void free_token_list(token_list*);
 
-// ELEMENTS
+/* ELEMENTS */
 
 typedef enum {
 	EXPR_INT,

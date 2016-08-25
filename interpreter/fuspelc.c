@@ -8,7 +8,11 @@
 #include "print.h"
 
 int main(void) {
-	token_list* tokens = NULL;
+	token_list* tokens;
+	fuspel* pgm;
+	expression to_eval, *evaled;
+
+	tokens = NULL;
 
 	while (!feof(stdin)) {
 		char program[79];
@@ -26,7 +30,7 @@ int main(void) {
 		}
 	}
 	
-	fuspel* pgm = parse(tokens);
+	pgm = parse(tokens);
 	free_token_list(tokens);
 	free(tokens);
 	
@@ -38,8 +42,6 @@ int main(void) {
 	printf("\nParsed program:\n");
 	print_fuspel(pgm);
 	printf("\n\n\n");
-
-	expression to_eval, *evaled;
 
 	to_eval.kind = EXPR_NAME;
 	to_eval.var1 = my_calloc(1, 5);

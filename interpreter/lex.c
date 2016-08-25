@@ -12,7 +12,7 @@ inline unsigned is_int_char(char input) {
 	return '0' <= input && input <= '9';
 }
 
-// The number of bytes that should be read to read an integer
+/* The number of bytes that should be read to read an integer */
 unsigned char lex_int_length(char* input) {
 	unsigned char n = 0;
 	while (is_int_char(*input++)) n++;
@@ -25,7 +25,7 @@ inline unsigned is_name_char(char input) {
 			input == '_');
 }
 
-// The number of bytes that should be read to read a name
+/* The number of bytes that should be read to read a name */
 unsigned char lex_name_length(char* input) {
 	unsigned char n = 0;
 	while (is_name_char(*input++)) n++;
@@ -33,11 +33,12 @@ unsigned char lex_name_length(char* input) {
 }
 
 token_list* lex(token_list* list, char* input) {
+	token_list* first_list;
+
 	if (input[0] == 0) {
 		return NULL;
 	}
 	
-	token_list* first_list;
 	if (list) {
 		first_list = list;
 		while (list->rest) list = list->rest;
@@ -48,9 +49,9 @@ token_list* lex(token_list* list, char* input) {
 	}
 
 	while (*input) {
-		list->elem.var = NULL;
-
 		unsigned proceed_to_next_token = 1;
+
+		list->elem.var = NULL;
 
 		switch (*input) {
 			case ';': list->elem.kind = TOKEN_SEMICOLON; break;
@@ -64,17 +65,18 @@ token_list* lex(token_list* list, char* input) {
 	
 			default:
 				if (is_int_char(*input)) {
-					list->elem.kind = TOKEN_INT;
+					char* s;
 					unsigned char len = lex_int_length(input);
-					char* s = my_calloc(1, len + 1);
+					s = my_calloc(1, len + 1);
+					list->elem.kind = TOKEN_INT;
 					list->elem.var = my_calloc(1, sizeof(int));
 					strncpy(s, input, len);
 					*((int*) list->elem.var) = atoi(s);
 					my_free(s);
 					input += len - 1;
 				} else if (is_name_char(*input)) {
-					list->elem.kind = TOKEN_NAME;
 					unsigned char len = lex_name_length(input);
+					list->elem.kind = TOKEN_NAME;
 					list->elem.var = my_calloc(1, len + 1);
 					strncpy(list->elem.var, input, len);
 					input += len - 1;

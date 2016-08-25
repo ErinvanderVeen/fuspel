@@ -1,13 +1,15 @@
 #include "eval.h"
 
+#include <stdio.h>
 #include <string.h>
 
 #include "mem.h"
+#include "print.h"
 
 void free_rules_until(fuspel* new, fuspel* old) {
 	while (new != old) {
-		free_rewrite_rule(&new->rule);
 		fuspel* _new = new->rest;
+		free_rewrite_rule(&new->rule);
 		my_free(new);
 		new = _new;
 	}
@@ -68,13 +70,13 @@ void free_replacements(replacements* repls) {
 
 unsigned match_expr(fuspel* rules, expression* to_match, expression* expr,
 		replacements** repls) {
+	unsigned matches;
+
 	if (to_match->kind != EXPR_NAME) {
 		expr = eval_rnf(rules, expr);
 		if (!expr)
 			return 0;
 	}
-
-	unsigned matches;
 
 	switch (to_match->kind) {
 		case EXPR_NAME:
@@ -88,7 +90,7 @@ unsigned match_expr(fuspel* rules, expression* to_match, expression* expr,
 			my_free(expr);
 			return matches;
 		case EXPR_LIST:
-			if (!to_match->var1) { // empty list
+			if (!to_match->var1) {
 				matches = eq_expression(to_match, expr);
 				free_expression(expr);
 				my_free(expr);
@@ -115,13 +117,16 @@ unsigned match_expr(fuspel* rules, expression* to_match, expression* expr,
 
 unsigned match_rule(fuspel* rules, rewrite_rule* rule, expression* expr,
 		replacements** repls) {
+	expression** expr_args;
+	unsigned char i;
+
 	switch (expr->kind) {
 		case EXPR_NAME:
 			return (!strcmp(expr->var1, rule->name) &&
 				empty_args_list(rule->args)) ? 1 : 0;
 		case EXPR_APP:
-			;expression** expr_args = flatten_app_args(expr);
-			unsigned char i = 0;
+			expr_args = flatten_app_args(expr);
+			i = 0;
 			if (!strcmp(expr_args[0]->var1, rule->name)) {
 				expression* _expr = expr_args[++i];
 				arg_list* args = rule->args;
@@ -169,11 +174,11 @@ expression* eval_rnf(fuspel* rules, expression* expr) {
 		case EXPR_APP:
 			while (_rules) {
 				if (match_rule(rules, &_rules->rule, expr, repls)) {
+					expression* old_result = result;
 					cpy_expression(result, &_rules->rule.rhs);
 					replace_all(*repls, result);
 					free_replacements(*repls);
 					my_free(repls);
-					expression* old_result = result;
 					result = eval_rnf(rules, old_result);
 					free_expression(old_result);
 					my_free(old_result);
@@ -195,12 +200,14 @@ expression* eval_rnf(fuspel* rules, expression* expr) {
 }
 
 expression* eval(fuspel* rules, expression* expr) {
-	expression* result = my_calloc(1, sizeof(expression));
-
 	expression *e1, *e2;
 	fuspel* _rules = rules;
-
+	expression* result = my_calloc(1, sizeof(expression));
 	replacements** repls = my_calloc(1, sizeof(replacements*));
+
+	printf("Evaluating: ");
+	print_expression(expr);
+	printf("\n");
 
 	switch (expr->kind) {
 		case EXPR_INT:
@@ -211,9 +218,9 @@ expression* eval(fuspel* rules, expression* expr) {
 		case EXPR_APP:
 			while (_rules) {
 				if (match_rule(rules, &_rules->rule, expr, repls)) {
+					expression* old_result = result;
 					cpy_expression(result, &_rules->rule.rhs);
 					replace_all(*repls, result);
-					expression* old_result = result;
 					result = eval(rules, old_result);
 					free_expression(old_result);
 					my_free(old_result);

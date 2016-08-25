@@ -17,6 +17,7 @@ token_list* parse_name(char** name, token_list* list) {
 }
 
 token_list* parse_simple_expression(expression* expr, token_list* list) {
+	expression* _expr;
 	switch (list->elem.kind) {
 		case TOKEN_INT:
 			expr->kind = EXPR_INT;
@@ -34,7 +35,6 @@ token_list* parse_simple_expression(expression* expr, token_list* list) {
 			if (!list)
 				return NULL;
 
-			expression* _expr;
 			switch (list->elem.kind) {
 				case TOKEN_CLOSE_P:
 					return list->rest;
@@ -139,16 +139,19 @@ token_list* parse_expression_no_app(expression* expr, token_list* list) {
 			free_expression(expr);
 		}
 	} else if (list->elem.kind == TOKEN_OPEN_SQ) {
+		expression *expr1, *expr2;
+		token_list* _list;
+
 		expr->kind = EXPR_LIST;
 
 		if (list->rest->elem.kind == TOKEN_CLOSE_SQ) {
 			return list->rest->rest;
 		}
 
-		expression* expr1 = my_calloc(1, sizeof(expression));
-		expression* expr2 = my_calloc(1, sizeof(expression));
+		expr1 = my_calloc(1, sizeof(expression));
+		expr2 = my_calloc(1, sizeof(expression));
 
-		token_list* _list = parse_expression(expr1, list->rest);
+		_list = parse_expression(expr1, list->rest);
 		if (!_list || _list->elem.kind != TOKEN_COLON) {
 			free_expression(expr1);
 			my_free(expr1);
@@ -228,13 +231,15 @@ token_list* parse_rule(rewrite_rule* rule, token_list* list) {
 }
 
 fuspel* parse(token_list* list) {
+	fuspel* rules;
+
 	while (list && list->elem.kind == TOKEN_SEMICOLON)
 		list = list->rest;
 
 	if (!list)
 		return NULL;
 
-	fuspel* rules = my_calloc(1, sizeof(fuspel));
+	rules = my_calloc(1, sizeof(fuspel));
 
 	list = parse_rule(&rules->rule, list);
 	if (!list)

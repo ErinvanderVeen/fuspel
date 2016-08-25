@@ -69,6 +69,9 @@ unsigned eq_expression(expression* a, expression* b) {
 }
 
 expression** flatten_app_args(expression* from) {
+	expression** result;
+	unsigned int i;
+
 	unsigned char len = 0;
 	expression* _from = from;
 	while (_from->kind == EXPR_APP) {
@@ -77,8 +80,8 @@ expression** flatten_app_args(expression* from) {
 	}
 	len++;
 
-	expression** result = my_calloc(1, sizeof(expression*) * (len + 1));
-	unsigned int i = 1;
+	result = my_calloc(1, sizeof(expression*) * (len + 1));
+	i = 1;
 	while (from->kind == EXPR_APP) {
 		result[len - i] = from->var2;
 		from = from->var1;
