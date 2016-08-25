@@ -1,0 +1,3 @@
+mul a b = code mul a b;
+twice f x = f (f x);
+main = twice twice twice (mul 2) 1;
