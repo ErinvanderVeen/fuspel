@@ -22,6 +22,7 @@ unsigned empty_args_list(arg_list* list) {
 }
 
 void cpy_expression(expression* dst, expression* src) {
+	free_expression(dst);
 	dst->kind = src->kind;
 	switch (dst->kind) {
 		case EXPR_INT:
@@ -136,6 +137,8 @@ void free_expression(expression* expr) {
 			my_free(expr->var2);
 			break;
 	}
+
+	expr->var1 = expr->var2 = NULL;
 }
 
 void free_arg_list(arg_list* list) {

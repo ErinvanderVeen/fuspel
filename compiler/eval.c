@@ -14,58 +14,112 @@ void free_rules_until(fuspel* new, fuspel* old) {
 	}
 }
 
-fuspel* match_expr(fuspel* rules, expression* to_match, expression* expr) {
-	if (to_match->kind != EXPR_NAME) {
-		expr = eval_rnf(rules, expr);
-		if (!expr)
-			return NULL;
-	}
+typedef struct replacements {
+	char* what;
+	expression* with;
+	struct replacements* rest;
+} replacements;
 
-	switch (to_match->kind) {
+void replace(char* name, expression* new, expression* expr) {
+	if (!expr)
+		return;
+
+	switch (expr->kind) {
 		case EXPR_NAME:
-			rules = push_fuspel(rules);
-			rules->rule.name = my_calloc(1, strlen(to_match->var1) + 1);
-			strcpy(rules->rule.name, to_match->var1);
-			rules->rule.args = NULL;
-			cpy_expression(&rules->rule.rhs, expr);
-			return rules;
+			if (!strcmp(expr->var1, name)) {
+				cpy_expression(expr, new);
+				break;
+			}
 		case EXPR_INT:
-			;unsigned matches = eq_expression(to_match, expr);
-			free_expression(expr);
-			my_free(expr);
-			return matches ? rules : NULL;
-		case EXPR_LIST:
-			if (!to_match->var1) { // empty list
-				unsigned matches = eq_expression(to_match, expr);
-				free_expression(expr);
-				my_free(expr);
-				return matches ? rules : NULL;
-			}
+			break;
 		case EXPR_TUPLE:
-			;fuspel* _rules = match_expr(rules, to_match->var1, expr->var1);
-			if (!_rules) {
-				free_expression(expr);
-				my_free(expr);
-				return NULL;
-			}
-			fuspel* __rules = match_expr(_rules, to_match->var2, expr->var2);
-			if (!__rules)
-				free_rules_until(_rules, rules);
-			free_expression(expr);
-			my_free(expr);
-			return __rules;
-		default:
-			free_expression(expr);
-			my_free(expr);
-			return NULL;
+		case EXPR_LIST:
+		case EXPR_APP:
+			replace(name, new, expr->var1);
+			replace(name, new, expr->var2);
+			break;
 	}
 }
 
-fuspel* match_rule(fuspel* rules, rewrite_rule* rule, expression* expr) {
+void replace_all(replacements* repls, expression* expr) {
+	while (repls) {
+		replace(repls->what, repls->with, expr);
+		repls = repls->rest;
+	}
+}
+
+replacements* push_replacement(char* what, expression* with, replacements* rest) {
+	replacements* new = my_calloc(1, sizeof(replacements));
+	new->what = what;
+	new->with = my_calloc(1, sizeof(expression));
+	cpy_expression(new->with, with);
+	new->rest = rest;
+	return new;
+}
+
+void free_replacements(replacements* repls) {
+	if (repls) {
+		free_replacements(repls->rest);
+		repls->rest = NULL;
+		free_expression(repls->with);
+		my_free(repls->with);
+		my_free(repls);
+	}
+}
+
+unsigned match_expr(fuspel* rules, expression* to_match, expression* expr,
+		replacements** repls) {
+	if (to_match->kind != EXPR_NAME) {
+		expr = eval_rnf(rules, expr);
+		if (!expr)
+			return 0;
+	}
+
+	unsigned matches;
+
+	switch (to_match->kind) {
+		case EXPR_NAME:
+			*repls = push_replacement(to_match->var1, expr, *repls);
+			free_expression(expr);
+			my_free(expr);
+			return 1;
+		case EXPR_INT:
+			matches = eq_expression(to_match, expr);
+			free_expression(expr);
+			my_free(expr);
+			return matches;
+		case EXPR_LIST:
+			if (!to_match->var1) { // empty list
+				matches = eq_expression(to_match, expr);
+				free_expression(expr);
+				my_free(expr);
+				return matches;
+			}
+		case EXPR_TUPLE:
+			if (to_match->kind != expr->kind) {
+				free_expression(expr);
+				my_free(expr);
+				return 0;
+			}
+			matches =
+				match_expr(rules, to_match->var1, expr->var1, repls) &&
+				match_expr(rules, to_match->var2, expr->var2, repls);
+			free_expression(expr);
+			my_free(expr);
+			return matches;
+		default:
+			free_expression(expr);
+			my_free(expr);
+			return 0;
+	}
+}
+
+unsigned match_rule(fuspel* rules, rewrite_rule* rule, expression* expr,
+		replacements** repls) {
 	switch (expr->kind) {
 		case EXPR_NAME:
 			return (!strcmp(expr->var1, rule->name) &&
-				empty_args_list(rule->args)) ? rules : NULL;
+				empty_args_list(rule->args)) ? 1 : 0;
 		case EXPR_APP:
 			;expression** expr_args = flatten_app_args(expr);
 			unsigned char i = 0;
@@ -74,13 +128,11 @@ fuspel* match_rule(fuspel* rules, rewrite_rule* rule, expression* expr) {
 				arg_list* args = rule->args;
 				fuspel* _rules = rules;
 				while (!empty_args_list(args)) {
-					fuspel* __rules = match_expr(_rules, &args->elem, _expr);
-					if (!__rules) {
+					if (!match_expr(_rules, &args->elem, _expr, repls)) {
 						free_rules_until(_rules, rules);
 						my_free(expr_args);
-						return NULL;
+						return 0;
 					}
-					_rules = __rules;
 
 					args = args->rest;
 					_expr = expr_args[++i];
@@ -88,26 +140,13 @@ fuspel* match_rule(fuspel* rules, rewrite_rule* rule, expression* expr) {
 					if (!empty_args_list(args) && !_expr) {
 						free_rules_until(_rules, rules);
 						my_free(expr_args);
-						return NULL;
+						return 0;
 					}
 				}
 				my_free(expr_args);
-				return _rules;
+				return 1;
 			}
 			my_free(expr_args);
-		default:
-			return NULL;
-	}
-}
-
-unsigned apply(expression* result, rewrite_rule* rule, expression* expr) {
-	switch (expr->kind) {
-		case EXPR_NAME:
-			cpy_expression(result, &rule->rhs);
-			return 1;
-			break;
-		case EXPR_APP:
-			// TODO
 		default:
 			return 0;
 	}
@@ -117,7 +156,8 @@ expression* eval_rnf(fuspel* rules, expression* expr) {
 	expression* result = my_calloc(1, sizeof(expression));
 
 	fuspel* _rules = rules;
-	fuspel* new_rules;
+
+	replacements** repls = my_calloc(1, sizeof(replacements*));
 
 	switch (expr->kind) {
 		case EXPR_INT:
@@ -129,19 +169,28 @@ expression* eval_rnf(fuspel* rules, expression* expr) {
 		case EXPR_NAME:
 		case EXPR_APP:
 			while (_rules) {
-				new_rules = match_rule(rules, &_rules->rule, expr);
-				if (new_rules) {
-					rules = new_rules;
-					my_free(result);
-					result = eval_rnf(rules, &_rules->rule.rhs);
-					free_rules_until(new_rules, rules);
+				if (match_rule(rules, &_rules->rule, expr, repls)) {
+					cpy_expression(result, &_rules->rule.rhs);
+					replace_all(*repls, result);
+					free_replacements(*repls);
+					my_free(repls);
+					expression* old_result = result;
+					result = eval_rnf(rules, old_result);
+					free_expression(old_result);
+					my_free(old_result);
 					return result;
 				}
+				free_replacements(*repls);
+				my_free(repls);
+				repls = my_calloc(1, sizeof(replacements*));
 				_rules = _rules->rest;
 			}
 			cpy_expression(result, expr);
 			break;
 	}
+
+	free_replacements(*repls);
+	my_free(repls);
 
 	return result;
 }
@@ -152,6 +201,8 @@ expression* eval(fuspel* rules, expression* expr) {
 	expression *e1, *e2;
 	fuspel* _rules = rules;
 
+	replacements** repls = my_calloc(1, sizeof(replacements*));
+
 	switch (expr->kind) {
 		case EXPR_INT:
 			cpy_expression(result, expr);
@@ -160,13 +211,20 @@ expression* eval(fuspel* rules, expression* expr) {
 		case EXPR_NAME:
 		case EXPR_APP:
 			while (_rules) {
-				fuspel* new_rules = match_rule(rules, &_rules->rule, expr);
-				if (new_rules) {
-					my_free(result);
-					result = eval(new_rules, &_rules->rule.rhs);
-					free_rules_until(new_rules, rules);
+				if (match_rule(rules, &_rules->rule, expr, repls)) {
+					cpy_expression(result, &_rules->rule.rhs);
+					replace_all(*repls, result);
+					expression* old_result = result;
+					result = eval(rules, old_result);
+					free_expression(old_result);
+					my_free(old_result);
+					free_replacements(*repls);
+					my_free(repls);
 					return result;
 				}
+				free_replacements(*repls);
+				my_free(repls);
+				repls = my_calloc(1, sizeof(replacements*));
 				_rules = _rules->rest;
 			}
 			cpy_expression(result, expr);
@@ -186,6 +244,9 @@ expression* eval(fuspel* rules, expression* expr) {
 			result->var2 = e2;
 			break;
 	}
+
+	free_replacements(*repls);
+	my_free(repls);
 
 	return result;
 }

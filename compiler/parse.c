@@ -78,7 +78,6 @@ token_list* parse_simple_expression(expression* expr, token_list* list) {
 
 			if (!list || list->elem.kind != TOKEN_COLON) {
 				free_expression(expr->var1);
-				my_free(expr->var1);
 				return NULL;
 			}
 			
@@ -172,8 +171,6 @@ token_list* parse_expression_no_app(expression* expr, token_list* list) {
 	}
 
 	list = parse_simple_expression(expr, list);
-	if (!list)
-		free_expression(expr);
 
 	return list;
 }

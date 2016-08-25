@@ -3,6 +3,6 @@
 
 #include "syntax.h"
 
-token_list* lex(char*);
+token_list* lex(token_list*, char*);
 
 #endif

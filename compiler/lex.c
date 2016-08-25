@@ -34,13 +34,20 @@ unsigned char lex_name_length(char* input) {
 	return n;
 }
 
-token_list* lex(char* input) {
+token_list* lex(token_list* list, char* input) {
 	if (input[0] == 0) {
 		return NULL;
 	}
 	
-	token_list* list = my_calloc(1, sizeof(token_list));
-	token_list* first_list = list;
+	token_list* first_list;
+	if (list) {
+		first_list = list;
+		while (list->rest) list = list->rest;
+		list->rest = my_calloc(1, sizeof(token_list));
+		list = list->rest;
+	} else {
+		first_list = list = my_calloc(1, sizeof(token_list));
+	}
 
 	while (*input) {
 		list->elem.var = NULL;
