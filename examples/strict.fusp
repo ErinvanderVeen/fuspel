@@ -1,0 +1,10 @@
+sub a b = code sub a b;
+
+take 0 _       = [];
+take _ []      = [];
+take n ![x:xs] = [x:take (sub 1 n) xs];
+
+repeat 0 x = [];
+repeat n x = [x:repeat (sub 1 n) x];
+
+main = take 1 (repeat 200 5);
