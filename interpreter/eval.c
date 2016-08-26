@@ -17,6 +17,7 @@ void free_rules_until(fuspel* new, fuspel* old) {
 typedef struct replacements {
 	char* what;
 	expression* with;
+	unsigned is_strict;
 	struct replacements* rest;
 } replacements;
 
@@ -42,18 +43,23 @@ void replace(char* name, expression* new, expression* expr) {
 	}
 }
 
-void replace_all(replacements* repls, expression* expr) {
+void replace_all(fuspel* rules, replacements* repls, expression* expr) {
 	while (repls) {
+		if (repls->is_strict) {
+			repls->with = eval(rules, repls->with);
+		}
 		replace(repls->what, repls->with, expr);
 		repls = repls->rest;
 	}
 }
 
-replacements* push_replacement(char* what, expression* with, replacements* rest) {
+replacements* push_replacement(char* what, expression* with,
+		unsigned is_strict, replacements* rest) {
 	replacements* new = my_calloc(1, sizeof(replacements));
 	new->what = what;
 	new->with = my_calloc(1, sizeof(expression));
 	cpy_expression(new->with, with);
+	new->is_strict = is_strict;
 	new->rest = rest;
 	return new;
 }
@@ -80,7 +86,8 @@ unsigned match_expr(fuspel* rules, expression* to_match, expression* expr,
 
 	switch (to_match->kind) {
 		case EXPR_NAME:
-			*repls = push_replacement(to_match->var1, expr, *repls);
+			*repls = push_replacement(
+					to_match->var1, expr, to_match->is_strict, *repls);
 			return 1;
 		case EXPR_INT:
 			matches = eq_expression(to_match, expr);
@@ -195,6 +202,11 @@ expression* append_to_app(expression* app, expression* from, unsigned char n) {
 	return app;
 }
 
+unsigned is_code_app(expression* expr) {
+	for (; expr->kind == EXPR_APP; expr = expr->var1);
+	return expr->kind == EXPR_CODE;
+}
+
 expression* eval_code(fuspel* rules, expression* expr) {
 	expression *root, *result, **args;
 	Code_1* f1; Code_2* f2;
@@ -202,7 +214,7 @@ expression* eval_code(fuspel* rules, expression* expr) {
 	unsigned char args_len;
 
 	for (root = expr; root->kind == EXPR_APP; root = root->var1);
-	if (root->kind != EXPR_CODE) {
+	if (root->kind != EXPR_CODE || !root->var1) {
 		return NULL;
 	}
 
@@ -244,7 +256,6 @@ expression* eval_code(fuspel* rules, expression* expr) {
 }
 
 expression* eval_rnf(fuspel* rules, expression* expr) {
-	expression* code_result;
 	expression* result = my_calloc(1, sizeof(expression));
 
 	fuspel* _rules = rules;
@@ -261,10 +272,9 @@ expression* eval_rnf(fuspel* rules, expression* expr) {
 
 		case EXPR_NAME:
 		case EXPR_APP:
-			code_result = eval_code(rules, expr);
-			if (code_result) {
+			if (is_code_app(expr)) {
 				my_free(result);
-				result = code_result;
+				result = eval_code(rules, expr);
 				break;
 			}
 
@@ -276,7 +286,7 @@ expression* eval_rnf(fuspel* rules, expression* expr) {
 					result = append_to_app(result, expr, skip_args);
 					old_result = result;
 					cpy_expression(result, &_rules->rule.rhs);
-					replace_all(*repls, result);
+					replace_all(rules, *repls, result);
 					free_replacements(*repls);
 					my_free(repls);
 					result = eval_rnf(rules, old_result);
@@ -303,7 +313,6 @@ expression* eval(fuspel* rules, expression* expr) {
 	expression *e1, *e2;
 	fuspel* _rules = rules;
 	expression* result = my_calloc(1, sizeof(expression));
-	expression* code_result;
 	replacements** repls = my_calloc(1, sizeof(replacements*));
 
 	switch (expr->kind) {
@@ -323,10 +332,9 @@ expression* eval(fuspel* rules, expression* expr) {
 
 		case EXPR_NAME:
 		case EXPR_APP:
-			code_result = eval_code(rules, expr);
-			if (code_result) {
+			if (is_code_app(expr)) {
 				my_free(result);
-				result = code_result;
+				result = eval_code(rules, expr);
 				break;
 			}
 
@@ -336,7 +344,7 @@ expression* eval(fuspel* rules, expression* expr) {
 								rules, &_rules->rule, expr, repls)) >= 0) {
 					expression *old_result;
 					cpy_expression(result, &_rules->rule.rhs);
-					replace_all(*repls, result);
+					replace_all(rules, *repls, result);
 					result = append_to_app(result, expr, skip_args);
 					old_result = result;
 					result = eval(rules, result);

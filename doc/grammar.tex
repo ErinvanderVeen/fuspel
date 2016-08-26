@@ -1,3 +1,4 @@
+% vim: nospell:
 \section{Grammar}
 \label{sec:grammar}
 
@@ -12,7 +13,7 @@
 
 	<Arg-list> ::= <Arg> ` ' <Arg-list> | <empty>
 
-	<Arg> ::= <Simple-expr>
+	<Arg> ::= [`!'] <Simple-expr>
 
 	<Simple-expr> ::= <Int>
 		\alt <Name>

@@ -12,6 +12,7 @@ typedef enum {
 	TOKEN_CLOSE_P,   /* ) */
 	TOKEN_COMMA,     /* , */
 	TOKEN_COLON,     /* : */
+	TOKEN_STRICT,    /* ! */
 	TOKEN_CODE,      /* code */
 	TOKEN_NAME,
 	TOKEN_INT
@@ -43,6 +44,7 @@ typedef enum {
 
 typedef struct {
 	expr_kind kind;
+	unsigned is_strict;
 	void* var1;
 	void* var2;
 } expression;
