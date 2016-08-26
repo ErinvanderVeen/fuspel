@@ -19,13 +19,13 @@ int main(void) {
 		if (!fgets(program, 79, stdin)) {
 			if (feof(stdin))
 				break;
-			fprintf(stderr, "Couldn't read input.");
+			fprintf(stderr, "Couldn't read input.\n");
 			exit(EXIT_FAILURE);
 		}
 
 		tokens = lex(tokens, program);
 		if (!tokens) {
-			fprintf(stderr, "Couldn't lex program.");
+			fprintf(stderr, "Couldn't lex program.\n");
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -35,7 +35,7 @@ int main(void) {
 	my_free(tokens);
 	
 	if (!pgm) {
-		fprintf(stderr, "Couldn't parse program.");
+		fprintf(stderr, "Couldn't parse program.\n");
 		exit(EXIT_FAILURE);
 	}
 

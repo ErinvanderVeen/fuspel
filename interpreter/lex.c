@@ -68,8 +68,8 @@ token_list* lex(token_list* list, char* input) {
 						is_space_char(input[4])) {
 					list->elem.kind = TOKEN_CODE;
 					input += 4;
+					break;
 				}
-				break;
 	
 			default:
 				if (is_int_char(*input)) {
