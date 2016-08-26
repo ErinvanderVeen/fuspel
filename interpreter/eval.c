@@ -46,7 +46,10 @@ void replace(char* name, expression* new, expression* expr) {
 void replace_all(fuspel* rules, replacements* repls, expression* expr) {
 	while (repls) {
 		if (repls->is_strict) {
-			repls->with = eval(rules, repls->with);
+			expression* temp = eval(rules, repls->with);
+			free_expression(repls->with);
+			my_free(repls->with);
+			repls->with = temp;
 		}
 		replace(repls->what, repls->with, expr);
 		repls = repls->rest;
@@ -74,42 +77,44 @@ void free_replacements(replacements* repls) {
 	}
 }
 
-unsigned match_expr(fuspel* rules, expression* to_match, expression* expr,
-		replacements** repls) {
+unsigned match_expr(fuspel* rules, expression* arg, expression* expr,
+		replacements** repls, unsigned is_strict) {
 	unsigned matches;
 
-	if (to_match->kind != EXPR_NAME) {
+	if (arg->kind != EXPR_NAME) {
 		expr = eval_rnf(rules, expr);
 		if (!expr)
 			return 0;
 	}
 
-	switch (to_match->kind) {
+	is_strict |= arg->is_strict;
+
+	switch (arg->kind) {
 		case EXPR_NAME:
 			*repls = push_replacement(
-					to_match->var1, expr, to_match->is_strict, *repls);
+					arg->var1, expr, is_strict, *repls);
 			return 1;
 		case EXPR_INT:
-			matches = eq_expression(to_match, expr);
+			matches = eq_expression(arg, expr);
 			free_expression(expr);
 			my_free(expr);
 			return matches;
 		case EXPR_LIST:
-			if (!to_match->var1) {
-				matches = eq_expression(to_match, expr);
+			if (!arg->var1) {
+				matches = eq_expression(arg, expr);
 				free_expression(expr);
 				my_free(expr);
 				return matches;
 			}
 		case EXPR_TUPLE:
-			if (to_match->kind != expr->kind) {
+			if (arg->kind != expr->kind) {
 				free_expression(expr);
 				my_free(expr);
 				return 0;
 			}
 			matches =
-				match_expr(rules, to_match->var1, expr->var1, repls) &&
-				match_expr(rules, to_match->var2, expr->var2, repls);
+				match_expr(rules, arg->var1, expr->var1, repls, is_strict) &&
+				match_expr(rules, arg->var2, expr->var2, repls, is_strict);
 			free_expression(expr);
 			my_free(expr);
 			return matches;
@@ -150,7 +155,7 @@ char match_rule(fuspel* rules, rewrite_rule* rule, expression* expr,
 				fuspel* _rules = rules;
 
 				while (!empty_args_list(args)) {
-					if (!match_expr(_rules, &args->elem, _expr, repls)) {
+					if (!match_expr(_rules, &args->elem, _expr, repls, 0)) {
 						free_rules_until(_rules, rules);
 						my_free(expr_args);
 						return -1;
@@ -213,6 +218,8 @@ expression* eval_code(fuspel* rules, expression* expr) {
 	expression *a1, *a2;
 	unsigned char args_len;
 
+	a1 = a2 = NULL;
+
 	for (root = expr; root->kind == EXPR_APP; root = root->var1);
 	if (root->kind != EXPR_CODE || !root->var1) {
 		return NULL;
@@ -236,6 +243,8 @@ expression* eval_code(fuspel* rules, expression* expr) {
 			a1 = eval(rules, args[1]);
 			a2 = eval(rules, args[2]);
 			if (!a1 || !a2) {
+				free_expression(a1);
+				free_expression(a2);
 				my_free(a1);
 				my_free(a2);
 				my_free(args);
@@ -246,9 +255,11 @@ expression* eval_code(fuspel* rules, expression* expr) {
 	}
 
 	for (args_len = 0; args[args_len]; args_len++);
-	append_to_app(result, expr, args_len - *((unsigned char*) root->var2));
+	result = append_to_app(result, expr, args_len - *((unsigned char*) root->var2) - 1);
 
 	my_free(args);
+	if (a1) free_expression(a1);
+	if (a2) free_expression(a2);
 	my_free(a1);
 	my_free(a2);
 
@@ -273,8 +284,12 @@ expression* eval_rnf(fuspel* rules, expression* expr) {
 		case EXPR_NAME:
 		case EXPR_APP:
 			if (is_code_app(expr)) {
+				expression *_result;
 				my_free(result);
-				result = eval_code(rules, expr);
+				_result = eval_code(rules, expr);
+				result = eval_rnf(rules, _result);
+				free_expression(_result);
+				my_free(_result);
 				break;
 			}
 
@@ -333,8 +348,12 @@ expression* eval(fuspel* rules, expression* expr) {
 		case EXPR_NAME:
 		case EXPR_APP:
 			if (is_code_app(expr)) {
+				expression* _result;
 				my_free(result);
-				result = eval_code(rules, expr);
+				_result = eval_code(rules, expr);
+				result = eval(rules, _result);
+				free_expression(_result);
+				my_free(_result);
 				break;
 			}
 
