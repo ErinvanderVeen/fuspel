@@ -374,3 +374,17 @@ expression* eval(fuspel* rules, expression* expr) {
 
 	return result;
 }
+
+expression* eval_main(fuspel* rules) {
+	expression to_eval, *evaled;
+
+	to_eval.kind = EXPR_NAME;
+	to_eval.var1 = my_calloc(1, 5);
+	strcpy(to_eval.var1, "main");
+
+	evaled = eval(rules, &to_eval);
+
+	free_expression(&to_eval);
+
+	return evaled;
+}

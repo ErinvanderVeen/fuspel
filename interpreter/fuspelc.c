@@ -10,7 +10,7 @@
 int main(void) {
 	token_list* tokens;
 	fuspel* pgm;
-	expression to_eval, *evaled;
+	expression* result;
 
 	tokens = NULL;
 
@@ -32,7 +32,7 @@ int main(void) {
 	
 	pgm = parse(tokens);
 	free_token_list(tokens);
-	free(tokens);
+	my_free(tokens);
 	
 	if (!pgm) {
 		fprintf(stderr, "Couldn't parse program.");
@@ -43,22 +43,17 @@ int main(void) {
 	print_fuspel(pgm);
 	printf("\n\n");
 
-	to_eval.kind = EXPR_NAME;
-	to_eval.var1 = my_calloc(1, 5);
-	strcpy(to_eval.var1, "main");
-
-	evaled = eval(pgm, &to_eval);
-	free_expression(&to_eval);
-	if (evaled) {
-		print_expression(evaled);
+	result = eval_main(pgm);
+	if (result) {
+		print_expression(result);
 		printf("\n");
 
-		free_expression(evaled);
-		free(evaled);
+		free_expression(result);
+		my_free(result);
 	}
 
 	free_fuspel(pgm);
-	free(pgm);
+	my_free(pgm);
 
 	return 0;
 }
