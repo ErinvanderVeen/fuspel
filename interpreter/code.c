@@ -1,9 +1,11 @@
 #include "code.h"
 
+#include <stdio.h>
 #include <string.h>
 #include <time.h>
 
 #include "mem.h"
+#include "print.h"
 
 expression* make_int_expression(int i) {
 	expression* result = my_calloc(1, sizeof(expression));
@@ -25,6 +27,14 @@ expression* code_time(void) {
 	return make_int_expression((int) time(NULL));
 }
 
+expression* code_print(expression* expr) {
+	expression* result = my_calloc(1, sizeof(expression));
+	cpy_expression(result, expr);
+	print_expression(expr);
+	printf("\n");
+	return result;
+}
+
 expression* code_mul(expression* a, expression* b) {
 	return (a->kind != EXPR_INT || b->kind != EXPR_INT)
 		? make_name_expression("mul on non-ints")
@@ -38,15 +48,18 @@ expression* code_sub(expression* a, expression* b) {
 }
 
 unsigned char code_find(char* name, void** function) {
-	if (!strcmp(name, "mul")) {
+	if (!strcmp(name, "time")) {
+		*function = (void(*)(void)) code_time;
+		return 0;
+	} else if (!strcmp(name, "print")) {
+		*function = (void(*)(void)) code_print;
+		return 1;
+	} else if (!strcmp(name, "mul")) {
 		*function = (void(*)(void)) code_mul;
 		return 2;
 	} else if (!strcmp(name, "sub")) {
 		*function = (void(*)(void)) code_sub;
 		return 2;
-	} else if (!strcmp(name, "time")) {
-		*function = (void(*)(void)) code_time;
-		return 0;
 	}
 
 	*function = NULL;
