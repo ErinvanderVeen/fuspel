@@ -1,0 +1,117 @@
+\section{Examples}
+\label{sec:examples}
+
+\subsection{A basic example}
+\label{sec:examples:basic}
+
+\begin{lstlisting}
+	id x      = x;
+	const x y = x;
+	fst (a,_) = a;
+	double x  = (x, x);
+	main      = fst (const (double 5) (double 10));
+\end{lstlisting}
+
+The program is rewritten as in \autoref{fig:rewrite:examples:basic}.
+
+\begin{figure}[h]
+	\centering
+	\begin{tikzpicture}[->,node distance=2em]
+		\node              (r0) {\fuspel{main}};
+		\node[below of=r0] (r1) {\fuspel{fst (const (double 5) (double 10))}};
+		\node[below of=r1] (r2) {\fuspel{fst (double 5)}};
+		\node[below of=r2] (r3) {\fuspel{fst (5, 5)}};
+		\node[below of=r3] (r4) {\fuspel{5}};
+		\path[draw] (r0) -- (r1) -- (r2) -- (r3) -- (r4);
+	\end{tikzpicture}
+	\caption{Basic rewriting example.\label{fig:rewrite:examples:basic}}
+\end{figure}
+
+\subsection{The code keyword}
+\label{sec:examples:code}
+
+With the \fuspel{code} keyword it is possible to link to C code. This works as
+follows:
+
+\begin{lstlisting}
+	mul a b = code mul a b;
+	sub a b = code sub a b;
+	fac 1   = 1;
+	fac n   = mul n (fac (sub 1 n));
+	main    = fac 3;
+\end{lstlisting}
+
+To rewrite a \fuspel{code} expression, all its arguments have to be evaluated
+completely. The corresponding C function is looked up and executed on its
+arguments. The expression is rewritten with the result of the function call.
+
+The code name \fuspel{mul} stands for integer multiplication, \fuspel{sub} for
+subtraction. Hence, the example is rewritten as:
+
+\begin{lstlisting}
+	main
+	     fac 3
+	     mul 3 (     fac (     sub 1 3)        )
+	     mul 3 (     fac (code sub 1 3)        )
+	     mul 3 (     fac 2                     )
+	     mul 3 (     mul 2 (fac (     sub 1 2)))
+	     mul 3 (     mul 2 (fac (code sub 1 2)))
+	     mul 3 (     mul 2 (fac 1)             )
+	     mul 3 (     mul 2 1                   )
+	     mul 3 (code mul 2 1                   )
+	     mul 3 2
+	code mul 3 2
+	6
+\end{lstlisting}
+
+A complete overview of the \fuspel{code} names can be found in
+\autoref{sec:code}.
+
+\subsection{Strictness}
+\label{sec:examples:strictness}
+
+By default, expressions are rewritten using the leftmost outermost rewriting
+strategy. This is guaranteed to find a normal form if one exists, but can be
+inefficient as it can lead to duplicate calculation. Consider the following
+example:
+
+\begin{lstlisting}
+	mul x y  = code mul x y;
+	double x = (x, x);
+	main     = double (mul 5 10);
+\end{lstlisting}
+
+The result is \fuspel{(50,50)}. The expression is rewritten to \fuspel{(mul 5
+10, mul 5 10)}, and only then the \fuspel{mul} calls are rewritten. This is
+inefficient, because we have to multiply the numbers twice.
+
+We can force another rewriting strategy by adding a strictness annotation
+(\fuspel{!}) to the argument of \fuspel{double}:
+
+\begin{lstlisting}
+	mul x y   = code mul x y;
+	double !x = (x, x);
+	main      = double (mul 5 10);
+\end{lstlisting}
+
+The result is the same, but the multiplication is only executed once. To apply
+the \fuspel{double} rule, its argument must be fully evaluated due to the
+strictness annotation. Therefore, the expression is first rewritten to
+\fuspel{double 50}.
+
+One must be careful with adding strictness annotations. Consider the following
+program:
+
+\begin{lstlisting}
+	mul x y     = code mul x y;
+	app f (a,b) = (f a, f b);
+	fst (x,_)   = x;
+	double !x   = (x, x);
+	main        = app fst (double (mul 5 10, mul 10 20));
+\end{lstlisting}
+
+In the call to \fuspel{double}, both \fuspel{mul 5 10} and \fuspel{mul 10 20}
+are fully rewritten due to the strictness annotation. However, only the first
+elements of the resulting tuples are used: the result is \fuspel{(50,50)}. We
+did not need to fully rewrite \fuspel{mul 10 20}, so the strictness annotation
+gave us more work.

@@ -2,6 +2,11 @@
 
 \author{Camil Staps}
 \title{Fuspel}
+\date{\gitcommitdate[formatDate]}
+
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[scaled]{beramono}
 
 \usepackage{geometry}
 \usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
@@ -14,12 +19,39 @@
     urlcolor=urlcolor,
     citecolor=citecolor]{hyperref}
 
+\usepackage{latexgit}
+
+\usepackage{tikz}
+
 \usepackage{syntax}
+\usepackage{fuspel}
+
+\lstset{
+	basicstyle=\small\ttfamily,
+	keywordstyle=\bfseries,
+	language=fuspel
+}
 
 \begin{document}
 
 \maketitle
+
+\begin{abstract}
+	This document describes Fuspel,
+	a minimal, untyped, lazy functional programming language
+	based on term rewriting.
+	It can run with even a few kB of RAM.
+	This document describes the language's syntax and semantics.
+	It accompanies version \gitcommithash{} of the C interpreter at
+	\url{https://github.com/camilstaps/fuspel}, committed at
+	\gitcommitdate[formatDate,formatTime].
+\end{abstract}
+
 \tableofcontents
+
+\input{examples}
+
+\appendix
 
 \input{grammar}
 
