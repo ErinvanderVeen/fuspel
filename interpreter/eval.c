@@ -152,11 +152,9 @@ char match_rule(fuspel* rules, rewrite_rule* rule, expression* expr,
 				expression* _expr = expr_args[++i];
 				arg_list* args = rule->args;
 				unsigned char args_len = len_arg_list(args);
-				fuspel* _rules = rules;
 
 				while (!empty_args_list(args)) {
-					if (!match_expr(_rules, &args->elem, _expr, repls, 0)) {
-						free_rules_until(_rules, rules);
+					if (!match_expr(rules, &args->elem, _expr, repls, 0)) {
 						my_free(expr_args);
 						return -1;
 					}
@@ -165,7 +163,6 @@ char match_rule(fuspel* rules, rewrite_rule* rule, expression* expr,
 					_expr = expr_args[++i];
 
 					if (!empty_args_list(args) && !_expr) {
-						free_rules_until(_rules, rules);
 						my_free(expr_args);
 						return -1;
 					}
