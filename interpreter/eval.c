@@ -5,410 +5,232 @@
 #include "code.h"
 #include "mem.h"
 
-void free_rules_until(fuspel* new, fuspel* old) {
-	while (new != old) {
-		fuspel* _new = new->rest;
-		free_rewrite_rule(&new->rule);
-		my_free(new);
-		new = _new;
-	}
-}
+struct node {
+	expr_kind kind;
+	void* var1;
+	void* var2;
+	unsigned int used_count;
+};
 
-typedef struct replacements {
-	char* what;
-	expression* with;
-	unsigned is_strict;
-	struct replacements* rest;
+typedef struct {
+	unsigned int length;
+	struct node* nodes[1];
+} nodes_array;
+
+typedef struct {
+	char* name;
+	struct node* node;
+} replacement;
+
+typedef struct {
+	unsigned int length;
+	replacement replacements[1];
 } replacements;
 
-void replace(char* name, expression* new, expression* expr) {
-	if (!expr)
+void eval(fuspel*, struct node**);
+
+#define eval_rnf(rs, n) eval(rs, n)
+
+nodes_array* push_node(nodes_array* nodes, struct node* node) {
+	unsigned int i;
+	for (i = 0; i < nodes->length && nodes->nodes[i]; i++);
+	if (nodes->nodes[i])
+		nodes = my_realloc(nodes, sizeof(nodes_array) +
+				2 * nodes->length * sizeof(*node));
+	nodes->nodes[i] = node;
+	return nodes;
+}
+
+replacements* push_repl(replacements* repls, char* name, struct node* node) {
+	unsigned int i;
+	for (i = 0; i < repls->length && repls->replacements[i].name; i++);
+	if (repls->replacements[i].name)
+		repls = my_realloc(repls, sizeof(replacements) +
+				2 * repls->length * sizeof(replacement));
+	repls->replacements[i].name = name;
+	repls->replacements[i].node = node;
+	return repls;
+}
+
+void free_node(struct node* node) {
+	if (!node)
 		return;
 
-	switch (expr->kind) {
-		case EXPR_NAME:
-			if (!strcmp(expr->var1, name)) {
-				cpy_expression(expr, new);
-				break;
-			}
+	free_node(node->var1);
+	free_node(node->var2);
+	my_free(node->var1);
+	my_free(node->var2);
+}
+
+void cpy_expression_to_node(struct node* dst, expression* src) {
+	if (!dst || !src)
+		return;
+
+	free_node(dst);
+
+	dst->kind = src->kind;
+	switch (src->kind) {
 		case EXPR_INT:
-		case EXPR_CODE:
+			dst->var1 = my_calloc(1, sizeof(int));
+			*((int*) dst->var1) = *((int*) src->var1);
 			break;
-		case EXPR_TUPLE:
-		case EXPR_LIST:
-		case EXPR_APP:
-			replace(name, new, expr->var1);
-			replace(name, new, expr->var2);
-			break;
-	}
-}
 
-void replace_all(fuspel* rules, replacements* repls, expression* expr) {
-	while (repls) {
-		if (repls->is_strict) {
-			expression* temp = eval(rules, repls->with);
-			free_expression(repls->with);
-			my_free(repls->with);
-			repls->with = temp;
-		}
-		replace(repls->what, repls->with, expr);
-		repls = repls->rest;
-	}
-}
-
-replacements* push_replacement(char* what, expression* with,
-		unsigned is_strict, replacements* rest) {
-	replacements* new = my_calloc(1, sizeof(replacements));
-	new->what = what;
-	new->with = my_calloc(1, sizeof(expression));
-	cpy_expression(new->with, with);
-	new->is_strict = is_strict;
-	new->rest = rest;
-	return new;
-}
-
-void free_replacements(replacements* repls) {
-	if (repls) {
-		free_replacements(repls->rest);
-		repls->rest = NULL;
-		free_expression(repls->with);
-		my_free(repls->with);
-		my_free(repls);
-	}
-}
-
-unsigned match_expr(fuspel* rules, expression* arg, expression* expr,
-		replacements** repls, unsigned is_strict) {
-	unsigned matches;
-
-	if (arg->kind != EXPR_NAME) {
-		expr = eval_rnf(rules, expr);
-		if (!expr)
-			return 0;
-	}
-
-	is_strict |= arg->is_strict;
-
-	switch (arg->kind) {
 		case EXPR_NAME:
-			*repls = push_replacement(
-					arg->var1, expr, is_strict, *repls);
-			return 1;
-		case EXPR_INT:
-			matches = eq_expression(arg, expr);
-			free_expression(expr);
-			my_free(expr);
-			return matches;
-		case EXPR_LIST:
-			if (!arg->var1) {
-				matches = eq_expression(arg, expr);
-				free_expression(expr);
-				my_free(expr);
-				return matches;
-			}
-		case EXPR_TUPLE:
-			if (arg->kind != expr->kind) {
-				free_expression(expr);
-				my_free(expr);
-				return 0;
-			}
-			matches =
-				match_expr(rules, arg->var1, expr->var1, repls, is_strict) &&
-				match_expr(rules, arg->var2, expr->var2, repls, is_strict);
-			free_expression(expr);
-			my_free(expr);
-			return matches;
+			dst->var1 = my_calloc(1, 1 + strlen((char*) src->var1));
+			strcpy(dst->var1, src->var1);
+			break;
+
 		default:
-			free_expression(expr);
-			my_free(expr);
+			if (src->var1) {
+				dst->var1 = my_calloc(1, sizeof(struct node));
+				cpy_expression_to_node(dst->var1, src->var1);
+			}
+			if (src->var2) {
+				dst->var2 = my_calloc(1, sizeof(struct node));
+				cpy_expression_to_node(dst->var2, src->var2);
+			}
+	}
+}
+
+void cpy_node_to_expression(expression* dst, struct node* src) {
+	if (!dst || !src)
+		return;
+
+	free_expression(dst);
+
+	dst->kind = src->kind;
+	switch (src->kind) {
+		case EXPR_INT:
+			dst->var1 = my_calloc(1, sizeof(int));
+			*((int*) dst->var1) = *((int*) src->var1);
+			break;
+
+		case EXPR_NAME:
+			dst->var1 = my_calloc(1, 1 + strlen((char*) src->var1));
+			strcpy(dst->var1, src->var1);
+			break;
+
+		default:
+			if (src->var1) {
+				dst->var1 = my_calloc(1, sizeof(expression));
+				cpy_node_to_expression(dst->var1, src->var1);
+			}
+			if (src->var2) {
+				dst->var2 = my_calloc(1, sizeof(expression));
+				cpy_node_to_expression(dst->var2, src->var2);
+			}
+	}
+}
+
+unsigned match_expr(fuspel* rules, expression* expr, struct node** node,
+		replacements** repls, nodes_array** to_free) {
+
+	switch (expr->kind) {
+		case EXPR_INT:
+			return *((int*) (*node)->var1) == *((int*) expr->var1);
+
+		case EXPR_NAME:
+			*repls = push_repl(*repls, (char*) expr->var1, *node);
+			return 1;
+
+		case EXPR_LIST:
+		case EXPR_TUPLE:
+			eval_rnf(rules, node);
+
+			if ((*node)->kind != expr->kind)
+				return 0;
+
+			*to_free = push_node(*to_free, *node);
+
+			if (expr->var1 == NULL)
+				return (*node)->var1 == NULL;
+
+			return
+				match_expr(rules, expr->var1, (*node)->var1, repls, to_free) &&
+				match_expr(rules, expr->var2, (*node)->var2, repls, to_free);
+
+		default:
 			return 0;
 	}
 }
 
-/**
- * Return value:
- *   < 0: rule does not match expr
- *     n: rule matches expr; n arguments at the end cannot be touched
- *
- * E.g., a rule
- *   f x y = (x,y)
- * can be applied to
- *   f 1 2 3 4
- * but 2 arguments cannot be touched (3 and 4).
- */
-char match_rule(fuspel* rules, rewrite_rule* rule, expression* expr,
-		replacements** repls) {
-	expression** expr_args;
-	unsigned char i;
-
-	switch (expr->kind) {
+int match_rule(fuspel* rules, rewrite_rule* rule, struct node* node,
+		replacements** repls, nodes_array** to_free) {
+	switch (node->kind) {
 		case EXPR_NAME:
-			return (!strcmp(expr->var1, rule->name) &&
-				empty_args_list(rule->args)) ? 0 : -1;
-		case EXPR_APP:
-			expr_args = flatten_app_args(expr);
-			i = 0;
-			if (!strcmp(expr_args[0]->var1, rule->name)) {
-				expression* _expr = expr_args[++i];
-				arg_list* args = rule->args;
-				unsigned char args_len = len_arg_list(args);
+			return (strcmp(rule->name, (char*) node->var1)) ? -1 : 0;
+			break;
 
-				while (!empty_args_list(args)) {
-					if (!match_expr(rules, &args->elem, _expr, repls, 0)) {
-						my_free(expr_args);
-						return -1;
-					}
-
-					args = args->rest;
-					_expr = expr_args[++i];
-
-					if (!empty_args_list(args) && !_expr) {
-						my_free(expr_args);
-						return -1;
-					}
-				}
-				while (_expr) _expr = expr_args[++i];
-				my_free(expr_args);
-				return i - args_len - 1;
-			}
-			my_free(expr_args);
 		default:
 			return -1;
 	}
 }
 
-/**
- * If
- *   app:  f x y
- *   from: g 1 2 3 4
- *   n:    3
- *
- * Then the result will be:
- *         f x y 2 3 4
- */
-expression* append_to_app(expression* app, expression* from, unsigned char n) {
-	expression *_from, *_app;
-	unsigned char i;
-	for (; n > 0; n--) {
-		_app = my_calloc(1, sizeof(expression));
-		_app->kind = EXPR_APP;
-		_app->var1 = app;
-		_app->var2 = my_calloc(1, sizeof(expression));
+void eval(fuspel* rules, struct node** node) {
+	fuspel* _rules;
+	replacements* repls;
+	nodes_array* to_free;
+	unsigned rerun;
 
-		_from = from;
-		for (i = 1; i < n; i++) _from = _from->var1;
-		cpy_expression(_app->var2, _from->var2);
+	repls = my_calloc(1, sizeof(replacements) + 10 * sizeof(replacement));
+	repls->length = 10;
 
-		app = _app;
-	}
-	return app;
-}
+	to_free = my_calloc(1, sizeof(nodes_array) + 10 * sizeof(struct node*));
+	to_free->length = 10;
 
-unsigned is_code_app(expression* expr) {
-	for (; expr->kind == EXPR_APP; expr = expr->var1);
-	return expr->kind == EXPR_CODE;
-}
+	do {
+		rerun = 0;
 
-expression* eval_code(fuspel* rules, expression* expr) {
-	expression *root, *result, **args;
-	Code_1* f1; Code_2* f2;
-	expression *a1, *a2;
-	unsigned char args_len;
-
-	a1 = a2 = NULL;
-
-	for (root = expr; root->kind == EXPR_APP; root = root->var1);
-	if (root->kind != EXPR_CODE || !root->var1) {
-		return NULL;
-	}
-
-	args = flatten_app_args(expr);
-
-	switch (*((unsigned char*) root->var2)) {
-		case 1:
-			f1 = (Code_1*) root->var1;
-			a1 = eval(rules, args[1]);
-			if (!a1) {
-				my_free(a1);
-				my_free(args);
-				return NULL;
-			}
-			result = f1(a1);
-			break;
-		case 2:
-			f2 = (Code_2*) root->var1;
-			a1 = eval(rules, args[1]);
-			a2 = eval(rules, args[2]);
-			if (!a1 || !a2) {
-				free_expression(a1);
-				free_expression(a2);
-				my_free(a1);
-				my_free(a2);
-				my_free(args);
-				return NULL;
-			}
-			result = f2(a1, a2);
-			break;
-	}
-
-	for (args_len = 0; args[args_len]; args_len++);
-	result = append_to_app(result, expr, args_len - *((unsigned char*) root->var2) - 1);
-
-	my_free(args);
-	if (a1) free_expression(a1);
-	if (a2) free_expression(a2);
-	my_free(a1);
-	my_free(a2);
-
-	return result;
-}
-
-expression* eval_rnf(fuspel* rules, expression* expr) {
-	expression* result = my_calloc(1, sizeof(expression));
-
-	fuspel* _rules = rules;
-
-	replacements** repls = my_calloc(1, sizeof(replacements*));
-
-	switch (expr->kind) {
-		case EXPR_INT:
-		case EXPR_TUPLE:
-		case EXPR_LIST:
-		case EXPR_CODE:
-			cpy_expression(result, expr);
-			break;
-
-		case EXPR_NAME:
-		case EXPR_APP:
-			if (is_code_app(expr)) {
-				expression *_result;
-				my_free(result);
-				_result = eval_code(rules, expr);
-				result = eval_rnf(rules, _result);
-				free_expression(_result);
-				my_free(_result);
+		switch ((*node)->kind) {
+			case EXPR_INT:
 				break;
-			}
 
-			while (_rules) {
-				char skip_args;
-				if ((skip_args = match_rule(
-								rules, &_rules->rule, expr, repls)) >= 0) {
-					expression *old_result;
-					result = append_to_app(result, expr, skip_args);
-					old_result = result;
-					cpy_expression(result, &_rules->rule.rhs);
-					replace_all(rules, *repls, result);
-					free_replacements(*repls);
-					my_free(repls);
-					result = eval_rnf(rules, old_result);
-					free_expression(old_result);
-					my_free(old_result);
-					return result;
+			case EXPR_NAME:
+			case EXPR_APP:
+				_rules = rules;
+				while (_rules) {
+					int add_args = match_rule(
+							rules, &_rules->rule, *node, &repls, &to_free);
+
+					if (add_args == 0) {
+						cpy_expression_to_node(*node, &_rules->rule.rhs);
+						rerun = 1;
+						break;
+					}
+					// TODO add args
+
+					to_free->nodes[0] = NULL;
+					repls->replacements[0].name = NULL;
+					repls->replacements[0].node = NULL;
+
+					_rules = _rules->rest;
 				}
-				free_replacements(*repls);
-				my_free(repls);
-				repls = my_calloc(1, sizeof(replacements*));
-				_rules = _rules->rest;
-			}
-			cpy_expression(result, expr);
-			break;
-	}
-
-	free_replacements(*repls);
-	my_free(repls);
-
-	return result;
-}
-
-expression* eval(fuspel* rules, expression* expr) {
-	expression *e1, *e2;
-	fuspel* _rules = rules;
-	expression* result = my_calloc(1, sizeof(expression));
-	replacements** repls = my_calloc(1, sizeof(replacements*));
-
-	switch (expr->kind) {
-		case EXPR_INT:
-			cpy_expression(result, expr);
-			break;
-
-		case EXPR_CODE:
-			if (*((unsigned char*) expr->var2) == 0) {
-				Code_0* code_fun = (Code_0*) expr->var1;
-				my_free(result);
-				result = code_fun();
-			} else {
-				cpy_expression(result, expr);
-			}
-			break;
-
-		case EXPR_NAME:
-		case EXPR_APP:
-			if (is_code_app(expr)) {
-				expression* _result;
-				my_free(result);
-				_result = eval_code(rules, expr);
-				result = eval(rules, _result);
-				free_expression(_result);
-				my_free(_result);
 				break;
-			}
 
-			while (_rules) {
-				char skip_args;
-				if ((skip_args = match_rule(
-								rules, &_rules->rule, expr, repls)) >= 0) {
-					expression *old_result;
-					cpy_expression(result, &_rules->rule.rhs);
-					replace_all(rules, *repls, result);
-					result = append_to_app(result, expr, skip_args);
-					old_result = result;
-					result = eval(rules, result);
-					free_expression(old_result);
-					my_free(old_result);
-					free_replacements(*repls);
-					my_free(repls);
-					return result;
-				}
-				free_replacements(*repls);
-				my_free(repls);
-				repls = my_calloc(1, sizeof(replacements*));
-				_rules = _rules->rest;
-			}
-			cpy_expression(result, expr);
-			break;
-
-		case EXPR_LIST:
-			if (!expr->var1) {
-				cpy_expression(result, expr);
+			case EXPR_LIST:
+			case EXPR_TUPLE:
+				eval(rules, (struct node**) &(*node)->var1);
+				eval(rules, (struct node**) &(*node)->var2);
 				break;
-			}
-		case EXPR_TUPLE:
-			e1 = eval(rules, expr->var1);
-			e2 = eval(rules, expr->var2);
 
-			result->kind = expr->kind;
-			result->var1 = e1;
-			result->var2 = e2;
-			break;
-	}
-
-	free_replacements(*repls);
-	my_free(repls);
-
-	return result;
+			default:
+				//TODO
+				break;
+		}
+	} while (rerun);
 }
 
 expression* eval_main(fuspel* rules) {
-	expression to_eval, *evaled;
+	struct node* main_node = my_calloc(1, sizeof(struct node));
+	expression* expr = my_calloc(1, sizeof(expression));
 
-	to_eval.kind = EXPR_NAME;
-	to_eval.var1 = my_calloc(1, 5);
-	strcpy(to_eval.var1, "main");
+	main_node->kind = EXPR_NAME;
+	main_node->var1 = my_calloc(1, 5);
+	strcpy(main_node->var1, "main");
 
-	evaled = eval(rules, &to_eval);
+	eval(rules, &main_node);
 
-	free_expression(&to_eval);
+	cpy_node_to_expression(expr, main_node);
 
-	return evaled;
+	return expr;
 }

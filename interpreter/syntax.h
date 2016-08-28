@@ -71,7 +71,6 @@ unsigned char len_arg_list(arg_list*);
 
 void cpy_expression(expression* dst, expression* src);
 unsigned eq_expression(expression*, expression*);
-expression** flatten_app_args(expression*);
 
 void concat_fuspel(fuspel* start, fuspel* end);
 fuspel* push_fuspel(fuspel*);

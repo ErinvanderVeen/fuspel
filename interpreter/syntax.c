@@ -84,30 +84,6 @@ unsigned eq_expression(expression* a, expression* b) {
 	return 0;
 }
 
-expression** flatten_app_args(expression* from) {
-	expression** result;
-	unsigned int i;
-
-	unsigned char len = 0;
-	expression* _from = from;
-	while (_from->kind == EXPR_APP) {
-		len++;
-		_from = _from->var1;
-	}
-	len++;
-
-	result = my_calloc(1, sizeof(expression*) * (len + 1));
-	i = 1;
-	while (from->kind == EXPR_APP) {
-		result[len - i] = from->var2;
-		from = from->var1;
-		i++;
-	}
-	result[0] = from;
-	result[len] = NULL;
-	return result;
-}
-
 void concat_fuspel(fuspel* start, fuspel* end) {
 	while (start) {
 		if (!start->rest) {
