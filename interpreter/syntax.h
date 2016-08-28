@@ -14,6 +14,7 @@ typedef enum {
 	TOKEN_COLON,     /* : */
 	TOKEN_STRICT,    /* ! */
 	TOKEN_CODE,      /* code */
+	TOKEN_IMPORT,    /* import */
 	TOKEN_NAME,
 	TOKEN_INT
 } token_kind;

@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "code.h"
+#include "fuspel.h"
 #include "log.h"
 #include "mem.h"
 
@@ -251,7 +252,8 @@ token_list* parse_rule(rewrite_rule* rule, token_list* list) {
 }
 
 fuspel* parse(token_list* list) {
-	fuspel* rules;
+	fuspel* rules = NULL;
+	fuspel* return_rules;
 
 	while (list && list->elem.kind == TOKEN_SEMICOLON)
 		list = list->rest;
@@ -259,13 +261,27 @@ fuspel* parse(token_list* list) {
 	if (!list)
 		return NULL;
 
-	rules = my_calloc(1, sizeof(fuspel));
+	if (list->elem.kind == TOKEN_IMPORT) {
+		list = list->rest;
+		if (!list || list->elem.kind != TOKEN_NAME)
+			return NULL;
+		rules = parse_file(rules, list->elem.var);
+		if (!rules)
+			return NULL;
 
-	list = parse_rule(&rules->rule, list);
-	if (!list)
-		return NULL;
+		list = list->rest->rest;
+
+		return_rules = rules;
+		while (rules->rest) rules = rules->rest;
+	} else {
+		return_rules = rules = my_calloc(1, sizeof(fuspel));
+
+		list = parse_rule(&rules->rule, list);
+		if (!list)
+			return NULL;
+	}
 
 	rules->rest = parse(list);
 
-	return rules;
+	return return_rules;
 }

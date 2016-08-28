@@ -109,13 +109,13 @@ expression** flatten_app_args(expression* from) {
 }
 
 void concat_fuspel(fuspel* start, fuspel* end) {
-	do {
+	while (start) {
 		if (!start->rest) {
 			start->rest = end;
 			return;
 		}
 		start = start->rest;
-	} while (start);
+	}
 }
 
 fuspel* push_fuspel(fuspel* rules) {

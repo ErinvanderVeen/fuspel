@@ -7,17 +7,30 @@
 #include "parse.h"
 #include "print.h"
 
-int main(void) {
-	token_list* tokens;
+#define LINE_LENGTH 139
+
+fuspel* parse_file(fuspel* already_parsed, char* fname) {
+	token_list* tokens = NULL;
 	fuspel* pgm;
-	expression* result;
+	FILE* f;
+	char* fname_;
 
-	tokens = NULL;
+	fname_ = my_calloc(1, strlen(fname) + 6);
+	strcpy(fname_, fname);
+	strcat(fname_, ".fusp");
 
-	while (!feof(stdin)) {
-		char program[79];
-		if (!fgets(program, 79, stdin)) {
-			if (feof(stdin))
+	f = fopen(fname_, "r");
+	if (!f) {
+		fprintf(stderr, "Couldn't read %s\n", fname_);
+		exit(EXIT_FAILURE);
+	}
+
+	printf("Lexing %s...\n", fname_);
+
+	while (!feof(f)) {
+		char program[LINE_LENGTH];
+		if (!fgets(program, LINE_LENGTH, f)) {
+			if (feof(f))
 				break;
 			fprintf(stderr, "Couldn't read input.\n");
 			exit(EXIT_FAILURE);
@@ -29,10 +42,31 @@ int main(void) {
 			exit(EXIT_FAILURE);
 		}
 	}
-	
+
+	printf("Parsing %s...\n", fname_);
+
 	pgm = parse(tokens);
 	free_token_list(tokens);
 	my_free(tokens);
+
+	concat_fuspel(pgm, already_parsed);
+
+	return pgm;
+}
+
+int main(int argc, char* argv[]) {
+	expression* result;
+	fuspel* pgm = NULL;
+	int i;
+
+	if (argc < 2) {
+		fprintf(stderr, "Usage: %s file [file [file [..]]]\n", argv[0]);
+		exit(EXIT_FAILURE);
+	}
+
+	for (i = 1; i < argc; i++) {
+		pgm = parse_file(pgm, argv[i]);
+	}
 	
 	if (!pgm) {
 		fprintf(stderr, "Couldn't parse program.\n");

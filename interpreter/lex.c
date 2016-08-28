@@ -34,9 +34,11 @@ unsigned char lex_name_length(char* input) {
 
 token_list* lex(token_list* list, char* input) {
 	token_list* first_list;
+	unsigned create_new_token;
 
-	if (input[0] == 0) {
-		return NULL;
+	while (*input && is_space_char(*input)) input++;
+	if (*input == 0) {
+		return list;
 	}
 	
 	if (list) {
@@ -48,9 +50,9 @@ token_list* lex(token_list* list, char* input) {
 		first_list = list = my_calloc(1, sizeof(token_list));
 	}
 
-	while (*input) {
-		unsigned create_new_token = 1;
+	create_new_token = 1;
 
+	while (*input) {
 		list->elem.var = NULL;
 
 		switch (*input) {
@@ -63,15 +65,20 @@ token_list* lex(token_list* list, char* input) {
 			case '=': list->elem.kind = TOKEN_EQUALS;    break;
 			case ',': list->elem.kind = TOKEN_COMMA;     break;
 			case '!': list->elem.kind = TOKEN_STRICT;    break;
-			case 'c':
-				if (input[1] == 'o' && input[2] == 'd' && input[3] == 'e' &&
-						is_space_char(input[4])) {
+			default:
+				if (input[0] == 'c' && input[1] == 'o' && input[2] == 'd' &&
+						input[3] == 'e' && is_space_char(input[4])) {
 					list->elem.kind = TOKEN_CODE;
 					input += 4;
 					break;
 				}
-	
-			default:
+				if (input[0] == 'i' && input[1] == 'm' && input[2] == 'p' &&
+						input[3] == 'o' && input[4] == 'r' &&
+						input[5] == 't' && is_space_char(input[6])) {
+					list->elem.kind = TOKEN_IMPORT;
+					input += 6;
+					break;
+				}
 				if (is_int_char(*input)) {
 					char* s;
 					unsigned char len = lex_int_length(input);
@@ -97,7 +104,7 @@ token_list* lex(token_list* list, char* input) {
 				}
 		}
 
-		input++;
+		do input++; while (*input && is_space_char(*input));
 
 		if (*input && create_new_token) {
 			list->rest = my_calloc(1, sizeof(token_list));
