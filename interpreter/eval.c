@@ -27,9 +27,10 @@ typedef struct {
 	replacement replacements[1];
 } replacements;
 
-void eval(fuspel*, struct node**);
+void eval(fuspel* rules, struct node** node,
+		replacements** repls, nodes_array** to_free);
 
-#define eval_rnf(rs, n) eval(rs, n)
+#define eval_rnf(rs, n, repls, tf) eval(rs, n, repls, tf)
 
 nodes_array* push_node(nodes_array* nodes, struct node* node) {
 	unsigned int i;
@@ -52,21 +53,31 @@ replacements* push_repl(replacements* repls, char* name, struct node* node) {
 	return repls;
 }
 
-void free_node(struct node* node) {
+void free_node(struct node* node, unsigned dont_free_first) {
 	if (!node)
 		return;
 
-	free_node(node->var1);
-	free_node(node->var2);
-	my_free(node->var1);
-	my_free(node->var2);
+	node->used_count--;
+
+	if (node->kind == EXPR_LIST ||
+			node->kind == EXPR_TUPLE ||
+			node->kind == EXPR_APP) {
+		free_node((struct node*) node->var1, 0);
+		free_node((struct node*) node->var2, 0);
+	}
+
+	if (node->used_count == 0) {
+		if (node->kind == EXPR_INT || node->kind == EXPR_NAME)
+			my_free(node->var1);
+
+		if (!dont_free_first)
+			my_free(node);
+	}
 }
 
 void cpy_expression_to_node(struct node* dst, expression* src) {
 	if (!dst || !src)
 		return;
-
-	free_node(dst);
 
 	dst->kind = src->kind;
 	switch (src->kind) {
@@ -90,6 +101,8 @@ void cpy_expression_to_node(struct node* dst, expression* src) {
 				cpy_expression_to_node(dst->var2, src->var2);
 			}
 	}
+
+	dst->used_count = 1;
 }
 
 void cpy_node_to_expression(expression* dst, struct node* src) {
@@ -135,7 +148,7 @@ unsigned match_expr(fuspel* rules, expression* expr, struct node** node,
 
 		case EXPR_LIST:
 		case EXPR_TUPLE:
-			eval_rnf(rules, node);
+			eval_rnf(rules, node, repls, to_free);
 
 			if ((*node)->kind != expr->kind)
 				return 0;
@@ -166,17 +179,20 @@ int match_rule(fuspel* rules, rewrite_rule* rule, struct node* node,
 	}
 }
 
-void eval(fuspel* rules, struct node** node) {
+void eval(fuspel* rules, struct node** node,
+		replacements** repls, nodes_array** to_free) {
 	fuspel* _rules;
-	replacements* repls;
-	nodes_array* to_free;
 	unsigned rerun;
 
-	repls = my_calloc(1, sizeof(replacements) + 10 * sizeof(replacement));
-	repls->length = 10;
+	if (!*repls) {
+		*repls = my_calloc(1, sizeof(replacements) + 10 * sizeof(replacement));
+		(*repls)->length = 10;
+	}
 
-	to_free = my_calloc(1, sizeof(nodes_array) + 10 * sizeof(struct node*));
-	to_free->length = 10;
+	if (!*to_free) {
+		*to_free = my_calloc(1, sizeof(nodes_array) + 10 * sizeof(struct node*));
+		(*to_free)->length = 10;
+	}
 
 	do {
 		rerun = 0;
@@ -190,18 +206,19 @@ void eval(fuspel* rules, struct node** node) {
 				_rules = rules;
 				while (_rules) {
 					int add_args = match_rule(
-							rules, &_rules->rule, *node, &repls, &to_free);
+							rules, &_rules->rule, *node, repls, to_free);
 
 					if (add_args == 0) {
+						free_node(*node, 1);
 						cpy_expression_to_node(*node, &_rules->rule.rhs);
 						rerun = 1;
 						break;
 					}
 					// TODO add args
 
-					to_free->nodes[0] = NULL;
-					repls->replacements[0].name = NULL;
-					repls->replacements[0].node = NULL;
+					(*to_free)->nodes[0] = NULL;
+					(*repls)->replacements[0].name = NULL;
+					(*repls)->replacements[0].node = NULL;
 
 					_rules = _rules->rest;
 				}
@@ -209,8 +226,8 @@ void eval(fuspel* rules, struct node** node) {
 
 			case EXPR_LIST:
 			case EXPR_TUPLE:
-				eval(rules, (struct node**) &(*node)->var1);
-				eval(rules, (struct node**) &(*node)->var2);
+				eval(rules, (struct node**) &(*node)->var1, repls, to_free);
+				eval(rules, (struct node**) &(*node)->var2, repls, to_free);
 				break;
 
 			default:
@@ -223,14 +240,24 @@ void eval(fuspel* rules, struct node** node) {
 expression* eval_main(fuspel* rules) {
 	struct node* main_node = my_calloc(1, sizeof(struct node));
 	expression* expr = my_calloc(1, sizeof(expression));
+	replacements** repls = my_calloc(1, sizeof(replacements*));
+	nodes_array** to_free = my_calloc(1, sizeof(nodes_array*));
 
 	main_node->kind = EXPR_NAME;
+	main_node->used_count = 1;
 	main_node->var1 = my_calloc(1, 5);
 	strcpy(main_node->var1, "main");
 
-	eval(rules, &main_node);
+	eval(rules, &main_node, repls, to_free);
 
 	cpy_node_to_expression(expr, main_node);
+
+	free_node(main_node, 0);
+
+	my_free(*repls);
+	my_free(*to_free);
+	my_free(repls);
+	my_free(to_free);
 
 	return expr;
 }

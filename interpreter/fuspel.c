@@ -45,6 +45,8 @@ fuspel* parse_file(fuspel* already_parsed, char* fname) {
 
 	printf("Parsing %s...\n", fname_);
 
+	my_free(fname_);
+
 	pgm = parse(tokens);
 	free_token_list(tokens);
 	my_free(tokens);
