@@ -1,7 +1,7 @@
 CFLAGS=-Wall -Werror -g
 
-DEPS=lex.h syntax.h print.h parse.h log.h eval.h mem.h code.h
-OBJ=fuspel.o lex.o syntax.o print.o parse.o log.o eval.o mem.o code.o
+DEPS=lex.h syntax.h print.h parse.h log.h eval.h mem.h code.h graphs.h
+OBJ=fuspel.o lex.o syntax.o print.o parse.o log.o eval.o mem.o code.o graphs.o
 EXE=fuspel
 
 .PHONY: all clean

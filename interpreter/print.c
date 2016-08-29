@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 #include "log.h"
+#include "mem.h"
 
 void print_token(token* tk) {
 	char c;
@@ -112,4 +113,12 @@ void print_fuspel(fuspel* rules) {
 		printf("\n");
 		print_fuspel(rules->rest);
 	}
+}
+
+void print_node(struct node* node) {
+	expression* e = my_calloc(1, sizeof(expression));
+	cpy_node_to_expression(e, node);
+	print_expression(e);
+	free_expression(e);
+	my_free(e);
 }

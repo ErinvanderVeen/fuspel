@@ -1,59 +1,46 @@
 #include "code.h"
 
-#include <stdio.h>
 #include <string.h>
 #include <time.h>
 
 #include "mem.h"
-#include "print.h"
 
-expression* make_int_expression(int i) {
-	expression* result = my_calloc(1, sizeof(expression));
-	result->kind = EXPR_INT;
-	result->var1 = my_calloc(1, sizeof(int));
-	*((int*) result->var1) = i;
-	return result;
+void fill_node_int(struct node** node, int i) {
+	free_node(*node, 0);
+	(*node)->kind = EXPR_INT;
+	(*node)->var1 = my_calloc(1, sizeof(int));
+	*((int*) (*node)->var1) = i;
 }
 
-expression* make_name_expression(char* s) {
-	expression* result = my_calloc(1, sizeof(expression));
-	result->kind = EXPR_NAME;
-	result->var1 = my_calloc(1, strlen(s) + 1);
-	strcpy(result->var1, s);
-	return result;
+void fill_node_name(struct node** node, char* s) {
+	free_node(*node, 0);
+	(*node)->kind = EXPR_NAME;
+	(*node)->var1 = my_calloc(1, strlen(s) + 1);
+	strcpy((*node)->var1, s);
 }
 
-expression* code_time(void) {
-	return make_int_expression((int) time(NULL));
+void code_time(struct node** result) {
+	fill_node_int(result, (int) time(NULL));
 }
 
-expression* code_print(expression* expr) {
-	expression* result = my_calloc(1, sizeof(expression));
-	cpy_expression(result, expr);
-	print_expression(expr);
-	printf("\n");
-	return result;
+void code_mul(struct node** result, struct node* a, struct node* b) {
+	if (a->kind != EXPR_INT || b->kind != EXPR_INT)
+		fill_node_name(result, "mul on non-ints");
+	else
+		fill_node_int(result, *((int*) a->var1) * *((int*) b->var1));
 }
 
-expression* code_mul(expression* a, expression* b) {
-	return (a->kind != EXPR_INT || b->kind != EXPR_INT)
-		? make_name_expression("mul on non-ints")
-		: make_int_expression(*((int*) a->var1) * *((int*) b->var1));
-}
-
-expression* code_sub(expression* a, expression* b) {
-	return (a->kind != EXPR_INT || b->kind != EXPR_INT)
-		? make_name_expression("sub on non-ints")
-		: make_int_expression(*((int*) b->var1) - *((int*) a->var1));
+void code_sub(struct node** result, struct node* a, struct node* b) {
+	if (a->kind != EXPR_INT || b->kind != EXPR_INT)
+		fill_node_name(result, "sub on non-ints");
+	else
+		fill_node_int(result, *((int*) b->var1) - *((int*) a->var1));
 }
 
 unsigned char code_find(char* name, void** function) {
 	if (!strcmp(name, "time")) {
 		*function = (void(*)(void)) code_time;
 		return 0;
-	} else if (!strcmp(name, "print")) {
-		*function = (void(*)(void)) code_print;
-		return 1;
 	} else if (!strcmp(name, "mul")) {
 		*function = (void(*)(void)) code_mul;
 		return 2;
