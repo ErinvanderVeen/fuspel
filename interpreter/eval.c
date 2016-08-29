@@ -75,6 +75,30 @@ void free_node(struct node* node, unsigned dont_free_first) {
 	}
 }
 
+struct node** flatten_app_args(struct node* from) {
+	struct node** result;
+	unsigned int i;
+	unsigned char len = 0;
+	struct node* _from = from;
+
+	while (_from->kind == EXPR_APP) {
+		len++;
+		_from = _from->var1;
+	}
+	len++;
+
+	result = my_calloc(1, sizeof(struct node*) * (len + 1));
+	i = 1;
+	while (from->kind == EXPR_APP) {
+		result[len - i] = from->var2;
+		from = from->var1;
+		i++;
+	}
+	result[0] = from;
+	result[len] = NULL;
+	return result;
+}
+
 void cpy_expression_to_node(struct node* dst, expression* src) {
 	if (!dst || !src)
 		return;
@@ -169,9 +193,43 @@ unsigned match_expr(fuspel* rules, expression* expr, struct node** node,
 
 int match_rule(fuspel* rules, rewrite_rule* rule, struct node* node,
 		replacements** repls, nodes_array** to_free) {
+	struct node** node_args;
+	unsigned char i;
+
 	switch (node->kind) {
 		case EXPR_NAME:
 			return (strcmp(rule->name, (char*) node->var1)) ? -1 : 0;
+			break;
+
+		case EXPR_APP:
+			node_args = flatten_app_args(node);
+			i = 0;
+			if (!strcmp(node_args[0]->var1, rule->name)) {
+				struct node* node = node_args[++i];
+				arg_list* args = rule->args;
+				unsigned char args_len = len_arg_list(args);
+
+				while (!empty_args_list(args)) {
+					if (!match_expr(rules, &args->elem, &node, repls, to_free)) {
+						my_free(node_args);
+						return -1;
+					}
+
+					args = args->rest;
+					node = node_args[++i];
+
+					if (!empty_args_list(args) && !node) {
+						my_free(node_args);
+						return -1;
+					}
+				}
+
+				while (node) node = node_args[++i];
+				my_free(node_args);
+				return i - args_len - 1;
+			}
+			my_free(node_args);
+			return -1;
 			break;
 
 		default:
