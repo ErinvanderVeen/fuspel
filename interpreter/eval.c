@@ -240,7 +240,6 @@ void eval(fuspel* rules, struct node** node,
 				if (is_code_app(*node)) {
 					eval_code_app(rules, node, repls, to_free);
 					rerun = 1;
-					// TODO
 					break;
 				}
 
@@ -251,10 +250,13 @@ void eval(fuspel* rules, struct node** node,
 
 					if (add_args >= 0) {
 						unsigned char j;
+						unsigned int org_used_count;
 						struct node** _node = node;
 
 						for (j = 0; j < add_args; j++)
 							_node = (struct node**) &(*_node)->var1;
+
+						org_used_count = (*_node)->used_count;
 
 						for (j = 0; (*repls)->replacements[j].node; j++)
 							use_node((*repls)->replacements[j].node, 1);
@@ -262,6 +264,7 @@ void eval(fuspel* rules, struct node** node,
 						free_node(*_node, 0);
 						cpy_expression_to_node(*_node, &_rules->rule.rhs);
 						replace_all(*repls, _node);
+						use_node(*_node, org_used_count - 1);
 
 						for (j = 0; (*repls)->replacements[j].node; j++)
 							free_node((*repls)->replacements[j].node, 1);
