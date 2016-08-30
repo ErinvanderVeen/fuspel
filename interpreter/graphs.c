@@ -18,17 +18,17 @@ void use_node(struct node* node, unsigned int count) {
 	}
 }
 
-void free_node(struct node* node, unsigned free_first) {
+void free_node(struct node* node, unsigned int count, unsigned free_first) {
 	if (!node)
 		return;
 
-	node->used_count--;
+	node->used_count -= count;
 
 	if (node->kind == EXPR_LIST ||
 			node->kind == EXPR_TUPLE ||
 			node->kind == EXPR_APP) {
-		free_node((struct node*) node->var1, 1);
-		free_node((struct node*) node->var2, 1);
+		free_node((struct node*) node->var1, count, 1);
+		free_node((struct node*) node->var2, count, 1);
 	}
 
 	if (node->used_count == 0) {

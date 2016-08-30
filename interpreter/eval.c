@@ -6,6 +6,10 @@
 #include "graphs.h"
 #include "mem.h"
 
+#ifdef _FUSPEL_DEBUG
+#include "print.h"
+#endif
+
 typedef struct {
 	char* name;
 	struct node* node;
@@ -35,42 +39,37 @@ replacements* push_repl(replacements* repls, char* name, struct node* node) {
 void replace_all(replacements* repls, struct node** node) {
 	unsigned char i;
 	unsigned int org_used_count;
-	unsigned rerun = 1;
 
 	if (!node || !*node)
 		return;
 
-	while (rerun) {
-		rerun = 0;
+	switch ((*node)->kind) {
+		case EXPR_INT:
+		case EXPR_CODE:
+			break;
 
-		switch ((*node)->kind) {
-			case EXPR_INT:
-			case EXPR_CODE:
-				break;
-
-			case EXPR_NAME:
-				for (i = 0; repls->replacements[i].name; i++) {
-					if (!strcmp(repls->replacements[i].name,
-								(char*) (*node)->var1)) {
-						org_used_count = (*node)->used_count;
-						free_node(*node, 1);
-						*node = repls->replacements[i].node;
-						use_node(*node, org_used_count);
-						rerun = 1;
-						break;
-					}
+		case EXPR_NAME:
+			for (i = 0; repls->replacements[i].name; i++) {
+				if (!strcmp(repls->replacements[i].name,
+							(char*) (*node)->var1)) {
+					org_used_count = (*node)->used_count;
+					free_node(*node, 1, 1);
+					*node = repls->replacements[i].node;
+					use_node(*node, org_used_count);
+					break;
 				}
-				break;
+			}
+			break;
 
-			case EXPR_LIST:
-			case EXPR_TUPLE:
-			case EXPR_APP:
-				replace_all(repls, (struct node**) &(*node)->var1);
-				replace_all(repls, (struct node**) &(*node)->var2);
-				break;
-		}
+		case EXPR_LIST:
+		case EXPR_TUPLE:
+		case EXPR_APP:
+			replace_all(repls, (struct node**) &(*node)->var1);
+			replace_all(repls, (struct node**) &(*node)->var2);
+			break;
 	}
 }
+
 
 struct node** flatten_app_args(struct node* from) {
 	struct node** result;
@@ -210,6 +209,10 @@ void eval_code_app(fuspel* rules, struct node** node,
 	my_free(args);
 }
 
+#ifdef _FUSPEL_DEBUG
+struct node* root_node;
+#endif
+
 void eval(fuspel* rules, struct node** node,
 		replacements** repls, nodes_array** to_free, unsigned to_rnf) {
 	fuspel* _rules;
@@ -227,6 +230,13 @@ void eval(fuspel* rules, struct node** node,
 		*to_free = my_calloc(1, sizeof(nodes_array) + 10 * sizeof(struct node*));
 		(*to_free)->length = 10;
 	}
+
+#ifdef _FUSPEL_DEBUG
+	if (!root_node) {
+		root_node = *node;
+		print_node_to_file(root_node, NULL);
+	}
+#endif
 
 	do {
 		rerun = 0;
@@ -261,13 +271,13 @@ void eval(fuspel* rules, struct node** node,
 						for (j = 0; (*repls)->replacements[j].node; j++)
 							use_node((*repls)->replacements[j].node, 1);
 
-						free_node(*_node, 0);
+						free_node(*_node, 1, 0);
 						cpy_expression_to_node(*_node, &_rules->rule.rhs);
 						replace_all(*repls, _node);
 						use_node(*_node, org_used_count - 1);
 
 						for (j = 0; (*repls)->replacements[j].node; j++)
-							free_node((*repls)->replacements[j].node, 1);
+							free_node((*repls)->replacements[j].node, add_args + 1, 1);
 
 						(*to_free)->nodes[0] = NULL;
 						(*repls)->replacements[0].name = NULL;
@@ -300,6 +310,11 @@ void eval(fuspel* rules, struct node** node,
 				//TODO
 				break;
 		}
+
+#ifdef _FUSPEL_DEBUG
+		if (rerun)
+			print_node_to_file(root_node, NULL);
+#endif
 	} while (rerun);
 }
 
@@ -318,7 +333,8 @@ expression* eval_main(fuspel* rules) {
 
 	cpy_node_to_expression(expr, main_node);
 
-	free_node(main_node, 1);
+	printf("main is used %d time(s)\n", main_node->used_count);
+	free_node(main_node, 1, 1);
 
 	my_free(*repls);
 	my_free(*to_free);

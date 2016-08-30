@@ -16,7 +16,7 @@ typedef struct {
 } nodes_array;
 
 void use_node(struct node* node, unsigned int count);
-void free_node(struct node* node, unsigned free_first);
+void free_node(struct node* node, unsigned int count, unsigned free_first);
 
 nodes_array* push_node(nodes_array* nodes, struct node* node);
 

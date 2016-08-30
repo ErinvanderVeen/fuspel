@@ -122,3 +122,66 @@ void print_node(struct node* node) {
 	free_expression(e);
 	my_free(e);
 }
+
+#ifdef _FUSPEL_DEBUG
+static unsigned int file_count = 0;
+
+void print_node_to_file(struct node* node, FILE* f) {
+	unsigned close = 0;
+
+	if (!node)
+		return;
+
+	if (!f) {
+		char fname[20];
+		sprintf(fname, "graph-%03u.dot", file_count++);
+		f = fopen(fname, "w");
+		fprintf(f, "digraph {\n");
+		fprintf(f, "node [shape=rectangle];\n");
+		close = 1;
+	}
+
+	switch (node->kind) {
+		case EXPR_INT:
+			fprintf(f, "%d [label=\"%d (%d)\"];\n",
+					node, *((int*) node->var1), node->used_count);
+			break;
+
+		case EXPR_NAME:
+			fprintf(f, "%d [label=\"%s (%d)\"];\n",
+					node, (char*) node->var1, node->used_count);
+			break;
+
+		case EXPR_CODE:
+			fprintf(f, "%d [label=\"code: %p (%d)\"];\n",
+					node, node->var1, node->used_count);
+			break;
+
+		case EXPR_LIST:
+		case EXPR_TUPLE:
+		case EXPR_APP:
+			if (node->kind == EXPR_LIST)
+				fprintf(f, "%d [label=\"List (%d)\"];\n",
+						node, node->used_count);
+			else if (node->kind == EXPR_TUPLE)
+				fprintf(f, "%d [label=\"Tuple (%d)\"];\n",
+						node, node->used_count);
+			else if (node->kind == EXPR_APP)
+				fprintf(f, "%d [label=\"App (%d)\"];\n",
+						node, node->used_count);
+
+			if (node->var1) {
+				print_node_to_file((struct node*) node->var1, f);
+				print_node_to_file((struct node*) node->var2, f);
+				fprintf(f, "%d -> %d;\n", node, node->var1);
+				fprintf(f, "%d -> %d;\n", node, node->var2);
+			}
+			break;
+	}
+
+	if (close) {
+		fprintf(f, "}");
+		fclose(f);
+	}
+}
+#endif

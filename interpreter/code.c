@@ -6,14 +6,14 @@
 #include "mem.h"
 
 void fill_node_int(struct node** node, int i) {
-	free_node(*node, 0);
+	free_node(*node, 1, 0);
 	(*node)->kind = EXPR_INT;
 	(*node)->var1 = my_calloc(1, sizeof(int));
 	*((int*) (*node)->var1) = i;
 }
 
 void fill_node_name(struct node** node, char* s) {
-	free_node(*node, 0);
+	free_node(*node, 1, 0);
 	(*node)->kind = EXPR_NAME;
 	(*node)->var1 = my_calloc(1, strlen(s) + 1);
 	strcpy((*node)->var1, s);
