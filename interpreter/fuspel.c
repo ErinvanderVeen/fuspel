@@ -9,7 +9,7 @@
 
 #define LINE_LENGTH 139
 
-fuspel* parse_file(fuspel* already_parsed, char* fname) {
+fuspel* import(fuspel* already_parsed, char* fname) {
 	token_list* tokens = NULL;
 	fuspel* pgm;
 	FILE* f;
@@ -67,7 +67,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	for (i = 1; i < argc; i++) {
-		pgm = parse_file(pgm, argv[i]);
+		pgm = import(pgm, argv[i]);
 	}
 	
 	if (!pgm) {

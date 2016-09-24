@@ -1,6 +1,6 @@
 #ifndef _H_FUSPEL
 #define _H_FUSPEL
 
-fuspel* parse_file(fuspel* already_parsed, char* fname);
+fuspel* import(fuspel* already_parsed, char* name);
 
 #endif

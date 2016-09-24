@@ -3,9 +3,10 @@
 #include <string.h>
 
 #include "code.h"
-#include "fuspel.h"
 #include "log.h"
 #include "mem.h"
+
+extern fuspel* import(fuspel* already_parsed, char* name);
 
 token_list* parse_name(char** name, token_list* list) {
 	if (list->elem.kind != TOKEN_NAME)
@@ -260,7 +261,7 @@ fuspel* parse(token_list* list) {
 		list = list->rest;
 		if (!list || list->elem.kind != TOKEN_NAME)
 			return NULL;
-		rules = parse_file(rules, list->elem.var);
+		rules = import(rules, list->elem.var);
 		if (!rules)
 			return NULL;
 

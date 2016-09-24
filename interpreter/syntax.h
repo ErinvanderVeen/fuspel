@@ -40,7 +40,7 @@ typedef enum {
                         var2: pointer to unsigned char (nr. of arguments) */
 	EXPR_LIST,       /* var1, var2: pointers to expression OR (nil) */
 	EXPR_TUPLE,      /* var1, var2: pointers to expression */
-	EXPR_APP,        /* var1, var2: pointers to expression */
+	EXPR_APP         /* var1, var2: pointers to expression */
 } expr_kind;
 
 typedef struct {
