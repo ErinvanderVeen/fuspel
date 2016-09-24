@@ -11,7 +11,6 @@
 typedef struct {
 	char* name;
 	struct node* node;
-	unsigned is_strict;
 } replacement;
 
 typedef struct replacements {
@@ -21,12 +20,11 @@ typedef struct replacements {
 
 void eval(fuspel* rules, struct node** node, unsigned to_rnf);
 
-void push_repl(replacements* repls, char* name, struct node* node, unsigned is_strict) {
+void push_repl(replacements* repls, char* name, struct node* node) {
 	while (repls->rest) repls = repls->rest;
 	repls->rest = my_calloc(1, sizeof(replacements));
 	repls->rest->replacement.name = name;
 	repls->rest->replacement.node = node;
-	repls->rest->replacement.is_strict = is_strict;
 	repls->rest->rest = NULL;
 }
 
@@ -39,7 +37,6 @@ void free_repls(replacements* repls) {
 		}
 		repls->replacement.name = NULL;
 		repls->replacement.node = NULL;
-		repls->replacement.is_strict = 0;
 	}
 }
 
@@ -76,10 +73,6 @@ void replace_all(fuspel *rules, replacements* repls, struct node** node) {
 						(*node)->var1 = repls->replacement.node;
 						(*node)->var2 = NULL;
 						use_node(*node, org_used_count - 1);
-					}
-					if (repls->replacement.is_strict) {
-						eval(rules, node, 1);
-						free_node(*node, 1, 0);
 					}
 					break;
 				}
@@ -127,13 +120,11 @@ struct node*** flatten_app_args(struct node** from) {
 }
 
 unsigned match_expr(fuspel* rules, expression* expr, struct node** node,
-		replacements* repls, unsigned is_strict) {
+		replacements* repls) {
 	replacements* _repls;
 	for (_repls = repls; _repls->rest; _repls = _repls->rest);
 
 	remove_redirects(*node);
-
-	is_strict |= expr->is_strict;
 
 	if (expr->kind == EXPR_INT ||
 			expr->kind == EXPR_LIST ||
@@ -145,7 +136,7 @@ unsigned match_expr(fuspel* rules, expression* expr, struct node** node,
 			return *((int*) (*node)->var1) == *((int*) expr->var1);
 
 		case EXPR_NAME:
-			push_repl(_repls, (char*) expr->var1, *node, is_strict);
+			push_repl(_repls, (char*) expr->var1, *node);
 			return 1;
 
 		case EXPR_LIST:
@@ -157,8 +148,8 @@ unsigned match_expr(fuspel* rules, expression* expr, struct node** node,
 				return (*node)->var1 == NULL;
 
 			return
-				match_expr(rules, expr->var1, (struct node**) &(*node)->var1, _repls, is_strict) &&
-				match_expr(rules, expr->var2, (struct node**) &(*node)->var2, _repls, is_strict);
+				match_expr(rules, expr->var1, (struct node**) &(*node)->var1, _repls) &&
+				match_expr(rules, expr->var2, (struct node**) &(*node)->var2, _repls);
 
 		default:
 			return 0;
@@ -186,7 +177,7 @@ int match_rule(fuspel* rules, rewrite_rule* rule, struct node** node,
 				printf("RULE: %s\n", rule->name);
 
 				while (!empty_args_list(args)) {
-					if (!match_expr(rules, &args->elem, node, repls, 0)) {
+					if (!match_expr(rules, &args->elem, node, repls)) {
 						my_free(node_args);
 						return -1;
 					}

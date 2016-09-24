@@ -119,7 +119,6 @@ void cpy_node_to_expression(expression* dst, struct node* src) {
 		return;
 
 	free_expression(dst);
-	dst->is_strict = 0;
 
 	dst->kind = src->kind;
 	switch (src->kind) {

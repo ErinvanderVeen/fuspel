@@ -32,7 +32,6 @@ unsigned char len_arg_list(arg_list* list) {
 void cpy_expression(expression* dst, expression* src) {
 	free_expression(dst);
 	dst->kind = src->kind;
-	dst->is_strict = src->is_strict;
 	switch (dst->kind) {
 		case EXPR_INT:
 			dst->var1 = my_calloc(1, sizeof(int));

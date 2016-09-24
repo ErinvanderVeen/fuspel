@@ -17,7 +17,6 @@ void print_token(token* tk) {
 		case TOKEN_CLOSE_SQ:  c = ']'; break;
 		case TOKEN_EQUALS:    c = '='; break;
 		case TOKEN_COMMA:     c = ','; break;
-		case TOKEN_STRICT:    c = '!'; break;
 		case TOKEN_CODE:      printf("code "); return;
 		case TOKEN_IMPORT:    printf("import "); return;
 		case TOKEN_NAME:
@@ -41,9 +40,6 @@ void print_token_list(token_list* list) {
 void print_expression(expression* expr) {
 	if (!expr)
 		return;
-
-	if (expr->is_strict)
-		printf("!");
 
 	switch (expr->kind) {
 		case EXPR_INT:

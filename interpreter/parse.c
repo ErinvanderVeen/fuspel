@@ -21,11 +21,6 @@ token_list* parse_name(char** name, token_list* list) {
 token_list* parse_simple_expression(expression* expr, token_list* list) {
 	expression* _expr;
 
-	if (list->elem.kind == TOKEN_STRICT) {
-		expr->is_strict = 1;
-		list = list->rest;
-	}
-
 	switch (list->elem.kind) {
 		case TOKEN_INT:
 			expr->kind = EXPR_INT;
