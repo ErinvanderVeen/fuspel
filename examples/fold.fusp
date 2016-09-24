@@ -1,0 +1,14 @@
+mul a b = code mul a b;
+sub a b = code sub a b;
+
+foldr op r []    = r;
+foldr op r [a:x] = op a (foldr op r x);
+
+prod = foldr mul 1;
+
+faclist 0 = [];
+faclist n = [n:faclist (sub 1 n)];
+
+fac n = prod (faclist n);
+
+main = fac 12;
