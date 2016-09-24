@@ -66,6 +66,10 @@ token_list* lex(token_list* list, char* input) {
 			case ',': list->elem.kind = TOKEN_COMMA;     break;
 			case '!': list->elem.kind = TOKEN_STRICT;    break;
 			default:
+				if (input[0] == '/' && input[1] == '/') {
+					while (input && input[0] != '\n') input++;
+					break;
+				}
 				if (input[0] == 'c' && input[1] == 'o' && input[2] == 'd' &&
 						input[3] == 'e' && is_space_char(input[4])) {
 					list->elem.kind = TOKEN_CODE;

@@ -5,9 +5,13 @@
 \setlength{\grammarparsep}{4pt}
 \setlength{\grammarindent}{10em}
 \begin{grammar}
-	<Fuspel> ::= <Rewrite-list>
+	<Fuspel> ::= <Statement-list>
 
-	<Rewrite-list> ::= <Rewrite> `;' <Rewrite-list> | <empty>
+	<Statement-list> ::= <Rerwite> `;' <Rewrite-list>
+		\alt <Comment> <Statement-list>
+		\alt <empty>
+
+	<Comment> ::= `//' \dots `\textbackslash n'
 
 	<Rewrite> ::= <Name> <Arg-list> `=' <Rhs>
 
