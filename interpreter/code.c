@@ -6,17 +6,21 @@
 #include "mem.h"
 
 void fill_node_int(struct node** node, int i) {
-	free_node(*node, 1, 0);
+	unsigned int used_count = (*node)->used_count;
+	free_node(*node, used_count, 0);
 	(*node)->kind = NODE_INT;
 	(*node)->var1 = my_calloc(1, sizeof(int));
 	*((int*) (*node)->var1) = i;
+	use_node(*node, used_count - 1);
 }
 
 void fill_node_name(struct node** node, char* s) {
-	free_node(*node, 1, 0);
+	unsigned int used_count = (*node)->used_count;
+	free_node(*node, used_count, 0);
 	(*node)->kind = NODE_NAME;
 	(*node)->var1 = my_calloc(1, strlen(s) + 1);
 	strcpy((*node)->var1, s);
+	use_node(*node, used_count - 1);
 }
 
 void code_time(struct node** result) {
