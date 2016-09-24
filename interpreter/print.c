@@ -1,7 +1,10 @@
 #include "print.h"
 
 #include <stdio.h>
+
+#ifdef _FUSPEL_DEBUG
 #include <inttypes.h>
+#endif
 
 #include "log.h"
 #include "mem.h"
