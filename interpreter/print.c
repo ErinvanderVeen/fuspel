@@ -1,6 +1,7 @@
 #include "print.h"
 
 #include <stdio.h>
+#include <inttypes.h>
 
 #include "log.h"
 #include "mem.h"
@@ -174,38 +175,43 @@ void print_node_to_file(struct node* node, FILE* f, struct visited_nodes *visite
 
 	switch (node->kind) {
 		case NODE_INT:
-			fprintf(f, "%d [label=\"%p: %d (%d)\", penwidth=%d];\n",
-					node, node, *((int*) node->var1), node->used_count, node->used_count);
+			fprintf(f, "%" PRIuPTR " [label=\"%p: %d (%d)\", penwidth=%d];\n",
+					(uintptr_t) node, node, *((int*) node->var1),
+					node->used_count, node->used_count);
 			break;
 
 		case NODE_NAME:
-			fprintf(f, "%d [label=\"%p: %s (%d)\", penwidth=%d];\n",
-					node, node, (char*) node->var1, node->used_count, node->used_count);
+			fprintf(f, "%" PRIuPTR " [label=\"%p: %s (%d)\", penwidth=%d];\n",
+					(uintptr_t) node, node, (char*) node->var1,
+					node->used_count, node->used_count);
 			break;
 
 		case NODE_CODE:
-			fprintf(f, "%d [label=\"%p: code: %p (%d)\", penwidth=%d];\n",
-					node, node, node->var1, node->used_count, node->used_count);
+			fprintf(f, "%" PRIuPTR " [label=\"%p: code: %p (%d)\", penwidth=%d];\n",
+					(uintptr_t) node, node, node->var1,
+					node->used_count, node->used_count);
 			break;
 
 		case NODE_LIST:
 		case NODE_TUPLE:
 		case NODE_APP:
 			if (node->kind == NODE_LIST)
-				fprintf(f, "%d [label=\"%p: List (%d)\", penwidth=%d];\n",
-						node, node, node->used_count, node->used_count);
+				fprintf(f, "%" PRIuPTR " [label=\"%p: List (%d)\", penwidth=%d];\n",
+						(uintptr_t) node, node, node->used_count, node->used_count);
 			else if (node->kind == NODE_TUPLE)
-				fprintf(f, "%d [label=\"%p: Tuple (%d)\", penwidth=%d];\n",
-						node, node, node->used_count, node->used_count);
+				fprintf(f, "%" PRIuPTR " [label=\"%p: Tuple (%d)\", penwidth=%d];\n",
+						(uintptr_t) node, node, node->used_count, node->used_count);
 			else if (node->kind == NODE_APP)
-				fprintf(f, "%d [label=\"%p: App (%d)\", penwidth=%d];\n",
-						node, node, node->used_count, node->used_count);
+				fprintf(f, "%" PRIuPTR " [label=\"%p: App (%d)\", penwidth=%d];\n",
+						(uintptr_t) node, node, node->used_count, node->used_count);
 
 			if (node->var1) {
 				print_node_to_file((struct node*) node->var1, f, visited);
 				print_node_to_file((struct node*) node->var2, f, visited);
-				fprintf(f, "%d -> %d [label=\"l\", penwidth=%d];\n", node, node->var1, node->used_count);
-				fprintf(f, "%d -> %d [label=\"r\", penwidth=%d];\n", node, node->var2, node->used_count);
+				fprintf(f, "%" PRIuPTR " -> %" PRIuPTR " [label=\"l\", penwidth=%d];\n",
+						(uintptr_t) node, (uintptr_t) node->var1, node->used_count);
+				fprintf(f, "%" PRIuPTR " -> %" PRIuPTR " [label=\"r\", penwidth=%d];\n",
+						(uintptr_t) node, (uintptr_t) node->var2, node->used_count);
 			}
 			break;
 	}
