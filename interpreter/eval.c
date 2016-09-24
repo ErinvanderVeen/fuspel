@@ -273,8 +273,6 @@ void eval(fuspel* rules, struct node** node, unsigned to_rnf) {
 #endif
 
 	do {
-		replacements* _repls;
-
 		rerun = 0;
 
 		printf("\nREWRITING %p / %p: ", node, *node);
@@ -293,17 +291,15 @@ void eval(fuspel* rules, struct node** node, unsigned to_rnf) {
 					break;
 				}
 
-				for (_repls = repls; _repls->rest; _repls = _repls->rest);
-
 				_rules = rules;
 				while (_rules) {
 					int add_args = match_rule(
-							rules, &_rules->rule, node, _repls);
+							rules, &_rules->rule, node, repls);
 
 					if (add_args >= 0) {
 						unsigned char j;
 						unsigned int org_used_count;
-						replacements* __repls;
+						replacements* _repls;
 						struct node** _node = node;
 						struct node* new_node = my_calloc(1, sizeof(struct node));
 
@@ -312,10 +308,10 @@ void eval(fuspel* rules, struct node** node, unsigned to_rnf) {
 
 						org_used_count = (*_node)->used_count;
 
-						for (__repls = _repls->rest;
-								__repls && __repls->replacement.node;
-								__repls = __repls->rest)
-							use_node(__repls->replacement.node, 1);
+						for (_repls = repls->rest;
+								_repls && _repls->replacement.node;
+								_repls = _repls->rest)
+							use_node(_repls->replacement.node, 1);
 
 						printf("Replacing <");
 						print_node(*_node);
@@ -324,7 +320,7 @@ void eval(fuspel* rules, struct node** node, unsigned to_rnf) {
 						print_node(new_node);
 						printf(">\n");
 
-						replace_all(rules, _repls->rest, &new_node);
+						replace_all(rules, repls->rest, &new_node);
 
 						if (org_used_count == 1) {
 							free_node(*_node, 1, 1);
@@ -339,21 +335,21 @@ void eval(fuspel* rules, struct node** node, unsigned to_rnf) {
 							use_node(new_node, org_used_count - 1);
 						}
 
-						for (__repls = _repls->rest;
-								__repls && __repls->replacement.node;
-								__repls = __repls->rest)
-							free_node(__repls->replacement.node, 1, 1);
+						for (_repls = repls->rest;
+								_repls && _repls->replacement.node;
+								_repls = _repls->rest)
+							free_node(_repls->replacement.node, 1, 1);
 
 						rerun = 1;
 						break;
 					}
 
-					free_repls(_repls->rest);
+					free_repls(repls);
 
 					_rules = _rules->rest;
 				}
 
-				free_repls(_repls);
+				free_repls(repls);
 				break;
 
 			case NODE_LIST:
