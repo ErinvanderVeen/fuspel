@@ -27,7 +27,7 @@ void use_node(struct node* node, unsigned int count) {
 	}
 }
 
-void free_node(struct node* node, unsigned int count, unsigned free_first) {
+void free_node(struct node* node, unsigned int count, bool free_first) {
 	if (!node)
 		return;
 

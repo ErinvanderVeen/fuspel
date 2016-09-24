@@ -16,7 +16,7 @@ void free_token_list(token_list* list) {
 	my_free(list->rest);
 }
 
-unsigned empty_args_list(arg_list* list) {
+bool empty_args_list(arg_list* list) {
 	return !list;
 }
 
@@ -59,7 +59,7 @@ void cpy_expression(expression* dst, expression* src) {
 	}
 }
 
-unsigned eq_expression(expression* a, expression* b) {
+bool eq_expression(expression* a, expression* b) {
 	if (a->kind != b->kind)
 		return 0;
 

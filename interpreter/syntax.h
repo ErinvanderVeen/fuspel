@@ -1,6 +1,8 @@
 #ifndef _H_SYNTAX
 #define _H_SYNTAX
 
+#include <stdbool.h>
+
 /* TOKENS */
 
 typedef enum {
@@ -65,11 +67,11 @@ typedef struct fuspel {
 	struct fuspel* rest;
 } fuspel;
 
-unsigned empty_args_list(arg_list*);
+bool empty_args_list(arg_list*);
 unsigned char len_arg_list(arg_list*);
 
 void cpy_expression(expression* dst, expression* src);
-unsigned eq_expression(expression*, expression*);
+bool eq_expression(expression*, expression*);
 
 void concat_fuspel(fuspel* start, fuspel* end);
 fuspel* push_fuspel(fuspel*);

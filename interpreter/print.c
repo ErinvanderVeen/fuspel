@@ -1,9 +1,8 @@
 #include "print.h"
 
-#include <stdio.h>
-
 #ifdef _FUSPEL_DEBUG
 #include <inttypes.h>
+#include <stdbool.h>
 #endif
 
 #include "log.h"
@@ -139,7 +138,7 @@ void push_visited_node(struct visited_nodes *list, struct node *node) {
 	list->next->node = node;
 }
 
-unsigned visited_node_exists(struct visited_nodes *list, struct node *node) {
+bool visited_node_exists(struct visited_nodes *list, struct node *node) {
 	while (list) {
 		if (list->node == node)
 			return 1;
@@ -149,8 +148,8 @@ unsigned visited_node_exists(struct visited_nodes *list, struct node *node) {
 }
 
 void print_node_to_file(struct node* node, FILE* f, struct visited_nodes *visited) {
-	unsigned close = 0;
-	unsigned do_free_visited = 0;
+	bool close = 0;
+	bool do_free_visited = 0;
 
 	if (visited_node_exists(visited, node))
 		return;
@@ -164,7 +163,6 @@ void print_node_to_file(struct node* node, FILE* f, struct visited_nodes *visite
 
 	if (!f) {
 		char fname[20];
-		printf(" === Drawing graph %d ===\n", file_count);
 		sprintf(fname, "graph-%03u.dot", file_count++);
 		f = fopen(fname, "w");
 		fprintf(f, "digraph {\n");

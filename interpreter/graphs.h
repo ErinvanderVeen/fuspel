@@ -1,6 +1,7 @@
 #ifndef _H_GRAPHS
 #define _H_GRAPHS
 
+#include <stdbool.h>
 #include "syntax.h"
 
 typedef enum {
@@ -22,7 +23,7 @@ struct node {
 };
 
 void use_node(struct node* node, unsigned int count);
-void free_node(struct node* node, unsigned int count, unsigned free_first);
+void free_node(struct node* node, unsigned int count, bool free_first);
 
 void remove_redirects(struct node *node);
 

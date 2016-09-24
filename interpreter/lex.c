@@ -1,14 +1,15 @@
 #include "lex.h"
 
+#include <stdbool.h>
 #include <string.h>
 
 #include "mem.h"
 
-inline unsigned is_space_char(char input) {
+inline bool is_space_char(char input) {
 	return input == '\t' || input == ' ' || input == '\n' || input == '\r';
 }
 
-inline unsigned is_int_char(char input) {
+inline bool is_int_char(char input) {
 	return '0' <= input && input <= '9';
 }
 
@@ -19,7 +20,7 @@ unsigned char lex_int_length(char* input) {
 	return n;
 }
 
-inline unsigned is_name_char(char input) {
+inline bool is_name_char(char input) {
 	return (('A' <= input && input <= 'Z') ||
 			('a' <= input && input <= 'z') ||
 			input == '_');
@@ -34,7 +35,7 @@ unsigned char lex_name_length(char* input) {
 
 token_list* lex(token_list* list, char* input) {
 	token_list* first_list;
-	unsigned create_new_token;
+	bool create_new_token;
 
 	while (*input && is_space_char(*input)) input++;
 	if (*input == 0) {

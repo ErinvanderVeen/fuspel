@@ -1,5 +1,6 @@
 #include "eval.h"
 
+#include <stdbool.h>
 #include <string.h>
 
 #include "code.h"
@@ -20,7 +21,7 @@ typedef struct replacements {
 	struct replacements* rest;
 } replacements;
 
-void eval(fuspel* rules, struct node** node, unsigned to_rnf);
+void eval(fuspel* rules, struct node** node, bool to_rnf);
 
 void push_repl(replacements* repls, char* name, struct node* node) {
 	while (repls->rest) repls = repls->rest;
@@ -115,7 +116,7 @@ struct node*** flatten_app_args(struct node** from) {
 	return result;
 }
 
-unsigned match_expr(fuspel* rules, expression* expr, struct node** node,
+bool match_expr(fuspel* rules, expression* expr, struct node** node,
 		replacements* repls) {
 	replacements* _repls;
 	for (_repls = repls; _repls->rest; _repls = _repls->rest);
@@ -202,7 +203,7 @@ int match_rule(fuspel* rules, rewrite_rule* rule, struct node** node,
 	}
 }
 
-unsigned is_code_app(struct node* node) {
+bool is_code_app(struct node* node) {
 	for (; node->kind == NODE_APP; node = node->var1);
 	return node->kind == NODE_CODE;
 }
@@ -240,9 +241,9 @@ void eval_code_app(fuspel* rules, struct node** node) {
 struct node** root_node;
 #endif
 
-void eval(fuspel* rules, struct node** node, unsigned to_rnf) {
+void eval(fuspel* rules, struct node** node, bool to_rnf) {
 	fuspel* _rules;
-	unsigned rerun;
+	bool rerun;
 	replacements* repls;
 
 	if (!node || !*node)
