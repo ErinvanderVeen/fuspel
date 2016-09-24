@@ -6,7 +6,9 @@
 #include "graphs.h"
 #include "mem.h"
 
+#ifdef _FUSPEL_DEBUG
 #include "print.h"
+#endif
 
 typedef struct {
 	char* name;
@@ -56,18 +58,12 @@ void replace_all(fuspel *rules, replacements* repls, struct node** node) {
 				if (repls->replacement.name && repls->replacement.node &&
 						!strcmp(repls->replacement.name,
 							(char*) (*node)->var1)) {
-					printf("Replacing %s with %p on %p / %p\n",
-							(char*) (*node)->var1,
-							repls->replacement.node,
-							node,
-							*node);
 					org_used_count = (*node)->used_count;
 					if (org_used_count == 1) {
 						free_node(*node, 1, 1);
 						*node = repls->replacement.node;
 						use_node(*node, org_used_count);
 					} else {
-						printf("---- REDIRECTION ---- \n");
 						free_node(*node, 1, 0);
 						(*node)->kind = NODE_REDIRECT;
 						(*node)->var1 = repls->replacement.node;
@@ -174,8 +170,6 @@ int match_rule(fuspel* rules, rewrite_rule* rule, struct node** node,
 				arg_list* args = rule->args;
 				unsigned char args_len = len_arg_list(args);
 
-				printf("RULE: %s\n", rule->name);
-
 				while (!empty_args_list(args)) {
 					if (!match_expr(rules, &args->elem, node, repls)) {
 						my_free(node_args);
@@ -266,10 +260,6 @@ void eval(fuspel* rules, struct node** node, unsigned to_rnf) {
 	do {
 		rerun = 0;
 
-		printf("\nREWRITING %p / %p: ", node, *node);
-		print_node(*node);
-		printf("... (repls %p)\n", repls);
-
 		switch ((*node)->kind) {
 			case NODE_INT:
 				break;
@@ -304,12 +294,7 @@ void eval(fuspel* rules, struct node** node, unsigned to_rnf) {
 								_repls = _repls->rest)
 							use_node(_repls->replacement.node, 1);
 
-						printf("Replacing <");
-						print_node(*_node);
-						printf(">: <");
 						cpy_expression_to_node(new_node, &_rules->rule.rhs);
-						print_node(new_node);
-						printf(">\n");
 
 						replace_all(rules, repls->rest, &new_node);
 
