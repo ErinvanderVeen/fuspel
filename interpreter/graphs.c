@@ -10,9 +10,9 @@ void use_node(struct node* node, unsigned int count) {
 
 	node->used_count += count;
 
-	if (node->kind == EXPR_LIST ||
-			node->kind == EXPR_TUPLE ||
-			node->kind == EXPR_APP) {
+	if (node->kind == NODE_LIST ||
+			node->kind == NODE_TUPLE ||
+			node->kind == NODE_APP) {
 		use_node(node->var1, count);
 		use_node(node->var2, count);
 	}
@@ -24,34 +24,23 @@ void free_node(struct node* node, unsigned int count, unsigned free_first) {
 
 	node->used_count -= count;
 
-	if (node->kind == EXPR_LIST ||
-			node->kind == EXPR_TUPLE ||
-			node->kind == EXPR_APP) {
+	if (node->kind == NODE_LIST ||
+			node->kind == NODE_TUPLE ||
+			node->kind == NODE_APP) {
 		free_node((struct node*) node->var1, count, 1);
 		free_node((struct node*) node->var2, count, 1);
 	}
 
 	if (node->used_count == 0) {
-		if (node->kind == EXPR_INT || node->kind == EXPR_NAME)
+		if (node->kind == NODE_INT || node->kind == NODE_NAME)
 			my_free(node->var1);
 
-		if (node->kind == EXPR_CODE)
+		if (node->kind == NODE_CODE)
 			my_free(node->var2);
 
 		if (free_first)
 			my_free(node);
 	}
-}
-
-nodes_array* push_node(nodes_array* nodes, struct node* node) {
-	unsigned int i;
-	for (i = 0; i < nodes->length && nodes->nodes[i]; i++);
-	if (nodes->nodes[i])
-		nodes = my_realloc(nodes, sizeof(nodes_array) +
-				2 * nodes->length * sizeof(*node));
-	nodes->nodes[i] = node;
-	nodes->nodes[i + 1] = NULL;
-	return nodes;
 }
 
 void cpy_expression_to_node(struct node* dst, expression* src) {
@@ -102,25 +91,25 @@ void cpy_node_to_expression(expression* dst, struct node* src) {
 
 	dst->kind = src->kind;
 	switch (src->kind) {
-		case EXPR_INT:
+		case NODE_INT:
 			dst->var1 = my_calloc(1, sizeof(int));
 			*((int*) dst->var1) = *((int*) src->var1);
 			break;
 
-		case EXPR_NAME:
+		case NODE_NAME:
 			dst->var1 = my_calloc(1, 1 + strlen((char*) src->var1));
 			strcpy(dst->var1, src->var1);
 			break;
 
-		case EXPR_CODE:
+		case NODE_CODE:
 			dst->var1 = src->var1;
 			dst->var2 = my_calloc(1, sizeof(unsigned char));
 			*((unsigned char*) dst->var2) = *((unsigned char*) src->var2);
 			break;
 
-		case EXPR_LIST:
-		case EXPR_TUPLE:
-		case EXPR_APP:
+		case NODE_LIST:
+		case NODE_TUPLE:
+		case NODE_APP:
 			dst->var1 = dst->var2 = NULL;
 			if (src->var1) {
 				dst->var1 = my_calloc(1, sizeof(expression));
@@ -130,5 +119,6 @@ void cpy_node_to_expression(expression* dst, struct node* src) {
 				dst->var2 = my_calloc(1, sizeof(expression));
 				cpy_node_to_expression(dst->var2, src->var2);
 			}
+			break;
 	}
 }

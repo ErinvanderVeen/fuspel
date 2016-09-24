@@ -16,7 +16,12 @@ void print_fuspel(fuspel*);
 void print_node(struct node*);
 
 #ifdef _FUSPEL_DEBUG
-void print_node_to_file(struct node*, FILE*);
+struct visited_nodes {
+	struct node* node;
+	struct visited_nodes* next;
+};
+
+void print_node_to_file(struct node*, FILE*, struct visited_nodes*);
 #endif
 
 #endif

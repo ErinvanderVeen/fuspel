@@ -1,4 +1,4 @@
-CFLAGS=-Wall -Wextra -Werror -s
+CFLAGS=-Wall -Wextra -Wno-format -Werror
 
 DEPS=lex.h syntax.h print.h parse.h log.h eval.h mem.h code.h graphs.h
 OBJ=fuspel.o lex.o syntax.o print.o parse.o log.o eval.o mem.o code.o graphs.o

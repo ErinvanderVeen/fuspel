@@ -35,12 +35,13 @@ void free_token_list(token_list*);
 /* ELEMENTS */
 
 typedef enum {
-	EXPR_INT,
-	EXPR_NAME,
-	EXPR_CODE,
-	EXPR_LIST,
-	EXPR_TUPLE,
-	EXPR_APP
+	EXPR_INT,        /* var1: pointer to int */
+	EXPR_NAME,       /* var1: pointer to char* */
+	EXPR_CODE,       /* var1: pointer to function;
+                        var2: pointer to unsigned char (nr. of arguments) */
+	EXPR_LIST,       /* var1, var2: pointers to expression OR (nil) */
+	EXPR_TUPLE,      /* var1, var2: pointers to expression */
+	EXPR_APP,        /* var1, var2: pointers to expression */
 } expr_kind;
 
 typedef struct {

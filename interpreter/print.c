@@ -126,14 +126,45 @@ void print_node(struct node* node) {
 #ifdef _FUSPEL_DEBUG
 static unsigned int file_count = 0;
 
-void print_node_to_file(struct node* node, FILE* f) {
-	unsigned close = 0;
+void free_visited_nodes(struct visited_nodes *list) {
+	if (list) {
+		free_visited_nodes(list->next);
+		my_free(list);
+	}
+}
 
-	if (!node)
+void push_visited_node(struct visited_nodes *list, struct node *node) {
+	while (list->next) list = list->next;
+	list->next = my_calloc(1, sizeof(struct visited_nodes));
+	list->next->node = node;
+}
+
+unsigned visited_node_exists(struct visited_nodes *list, struct node *node) {
+	while (list) {
+		if (list->node == node)
+			return 1;
+		list = list->next;
+	}
+	return 0;
+}
+
+void print_node_to_file(struct node* node, FILE* f, struct visited_nodes *visited) {
+	unsigned close = 0;
+	unsigned do_free_visited = 0;
+
+	if (visited_node_exists(visited, node))
 		return;
+
+	if (!visited) {
+		visited = my_calloc(1, sizeof(struct visited_nodes));
+		do_free_visited = 1;
+	}
+
+	push_visited_node(visited, node);
 
 	if (!f) {
 		char fname[20];
+		printf(" === Drawing graph %d ===\n", file_count);
 		sprintf(fname, "graph-%03u.dot", file_count++);
 		f = fopen(fname, "w");
 		fprintf(f, "digraph {\n");
@@ -142,39 +173,39 @@ void print_node_to_file(struct node* node, FILE* f) {
 	}
 
 	switch (node->kind) {
-		case EXPR_INT:
-			fprintf(f, "%d [label=\"%d (%d)\"];\n",
-					node, *((int*) node->var1), node->used_count);
+		case NODE_INT:
+			fprintf(f, "%d [label=\"%p: %d (%d)\", penwidth=%d];\n",
+					node, node, *((int*) node->var1), node->used_count, node->used_count);
 			break;
 
-		case EXPR_NAME:
-			fprintf(f, "%d [label=\"%s (%d)\"];\n",
-					node, (char*) node->var1, node->used_count);
+		case NODE_NAME:
+			fprintf(f, "%d [label=\"%p: %s (%d)\", penwidth=%d];\n",
+					node, node, (char*) node->var1, node->used_count, node->used_count);
 			break;
 
-		case EXPR_CODE:
-			fprintf(f, "%d [label=\"code: %p (%d)\"];\n",
-					node, node->var1, node->used_count);
+		case NODE_CODE:
+			fprintf(f, "%d [label=\"%p: code: %p (%d)\", penwidth=%d];\n",
+					node, node, node->var1, node->used_count, node->used_count);
 			break;
 
-		case EXPR_LIST:
-		case EXPR_TUPLE:
-		case EXPR_APP:
-			if (node->kind == EXPR_LIST)
-				fprintf(f, "%d [label=\"List (%d)\"];\n",
-						node, node->used_count);
-			else if (node->kind == EXPR_TUPLE)
-				fprintf(f, "%d [label=\"Tuple (%d)\"];\n",
-						node, node->used_count);
-			else if (node->kind == EXPR_APP)
-				fprintf(f, "%d [label=\"App (%d)\"];\n",
-						node, node->used_count);
+		case NODE_LIST:
+		case NODE_TUPLE:
+		case NODE_APP:
+			if (node->kind == NODE_LIST)
+				fprintf(f, "%d [label=\"%p: List (%d)\", penwidth=%d];\n",
+						node, node, node->used_count, node->used_count);
+			else if (node->kind == NODE_TUPLE)
+				fprintf(f, "%d [label=\"%p: Tuple (%d)\", penwidth=%d];\n",
+						node, node, node->used_count, node->used_count);
+			else if (node->kind == NODE_APP)
+				fprintf(f, "%d [label=\"%p: App (%d)\", penwidth=%d];\n",
+						node, node, node->used_count, node->used_count);
 
 			if (node->var1) {
-				print_node_to_file((struct node*) node->var1, f);
-				print_node_to_file((struct node*) node->var2, f);
-				fprintf(f, "%d -> %d;\n", node, node->var1);
-				fprintf(f, "%d -> %d;\n", node, node->var2);
+				print_node_to_file((struct node*) node->var1, f, visited);
+				print_node_to_file((struct node*) node->var2, f, visited);
+				fprintf(f, "%d -> %d [label=\"l\", penwidth=%d];\n", node, node->var1, node->used_count);
+				fprintf(f, "%d -> %d [label=\"r\", penwidth=%d];\n", node, node->var2, node->used_count);
 			}
 			break;
 	}
@@ -182,6 +213,10 @@ void print_node_to_file(struct node* node, FILE* f) {
 	if (close) {
 		fprintf(f, "}");
 		fclose(f);
+	}
+
+	if (do_free_visited) {
+		free_visited_nodes(visited);
 	}
 }
 #endif
