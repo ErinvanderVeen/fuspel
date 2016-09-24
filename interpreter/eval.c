@@ -19,8 +19,7 @@ typedef struct replacements {
 	struct replacements* rest;
 } replacements;
 
-void eval(fuspel* rules, struct node** node, replacements* repls,
-		unsigned to_rnf);
+void eval(fuspel* rules, struct node** node, unsigned to_rnf);
 
 void push_repl(replacements* repls, char* name, struct node* node, unsigned is_strict) {
 	while (repls->rest) repls = repls->rest;
@@ -66,11 +65,22 @@ void replace_all(fuspel *rules, replacements* repls, struct node** node) {
 							node,
 							*node);
 					org_used_count = (*node)->used_count;
-					free_node(*node, 1, 1);
-					*node = repls->replacement.node;
-					use_node(*node, org_used_count);
-					if (repls->replacement.is_strict)
-						eval(rules, node, NULL, 0);
+					if (org_used_count == 1) {
+						free_node(*node, 1, 1);
+						*node = repls->replacement.node;
+						use_node(*node, org_used_count);
+					} else {
+						printf("---- REDIRECTION ---- \n");
+						free_node(*node, 1, 0);
+						(*node)->kind = NODE_REDIRECT;
+						(*node)->var1 = repls->replacement.node;
+						(*node)->var2 = NULL;
+						use_node(*node, org_used_count - 1);
+					}
+					if (repls->replacement.is_strict) {
+						eval(rules, node, 1);
+						free_node(*node, 1, 0);
+					}
 					break;
 				}
 			}
@@ -82,6 +92,10 @@ void replace_all(fuspel *rules, replacements* repls, struct node** node) {
 			replace_all(rules, repls, (struct node**) &(*node)->var1);
 			replace_all(rules, repls, (struct node**) &(*node)->var2);
 			break;
+
+		case NODE_REDIRECT:
+			replace_all(rules, repls, (struct node**) &(*node)->var1);
+			break;
 	}
 }
 
@@ -91,9 +105,12 @@ struct node*** flatten_app_args(struct node** from) {
 	unsigned char len = 0;
 	struct node* _from = *from;
 
+	remove_redirects(_from);
+
 	while (_from->kind == NODE_APP) {
 		len++;
 		_from = _from->var1;
+		remove_redirects(_from);
 	}
 	len++;
 
@@ -114,12 +131,14 @@ unsigned match_expr(fuspel* rules, expression* expr, struct node** node,
 	replacements* _repls;
 	for (_repls = repls; _repls->rest; _repls = _repls->rest);
 
+	remove_redirects(*node);
+
 	is_strict |= expr->is_strict;
 
 	if (expr->kind == EXPR_INT ||
 			expr->kind == EXPR_LIST ||
 			expr->kind == EXPR_TUPLE)
-		eval(rules, node, NULL, 1);
+		eval(rules, node, 1);
 
 	switch (expr->kind) {
 		case EXPR_INT:
@@ -189,6 +208,10 @@ int match_rule(fuspel* rules, rewrite_rule* rule, struct node** node,
 			return -1;
 			break;
 
+		case NODE_REDIRECT:
+			return match_rule(rules, rule, (*node)->var1, repls);
+			break;
+
 		default:
 			return -1;
 	}
@@ -199,7 +222,7 @@ unsigned is_code_app(struct node* node) {
 	return node->kind == NODE_CODE;
 }
 
-void eval_code_app(fuspel* rules, struct node** node, replacements* repls) {
+void eval_code_app(fuspel* rules, struct node** node) {
 	struct node *root, ***args;
 	Code_1* f1;
 	Code_2* f2;
@@ -212,7 +235,7 @@ void eval_code_app(fuspel* rules, struct node** node, replacements* repls) {
 	args = flatten_app_args(node);
 
 	for (i = 1; i <= *((unsigned char*) root->var2); i++)
-		eval(rules, args[i], repls, 0);
+		eval(rules, args[i], 0);
 
 	switch (*((unsigned char*) root->var2)) {
 		case 1:
@@ -232,18 +255,15 @@ void eval_code_app(fuspel* rules, struct node** node, replacements* repls) {
 struct node** root_node;
 #endif
 
-void eval(fuspel* rules, struct node** node, replacements* repls,
-		unsigned to_rnf) {
+void eval(fuspel* rules, struct node** node, unsigned to_rnf) {
 	fuspel* _rules;
-	unsigned rerun, do_free_repls = 0;
+	unsigned rerun;
+	replacements* repls;
 
 	if (!node || !*node)
 		return;
 
-	if (!repls) {
-		repls = my_calloc(1, sizeof(replacements));
-		do_free_repls = 1;
-	}
+	repls = my_calloc(1, sizeof(replacements));
 
 #ifdef _FUSPEL_DEBUG
 	if (!root_node) {
@@ -268,7 +288,7 @@ void eval(fuspel* rules, struct node** node, replacements* repls,
 			case NODE_NAME:
 			case NODE_APP:
 				if (is_code_app(*node)) {
-					eval_code_app(rules, node, repls);
+					eval_code_app(rules, node);
 					rerun = 1;
 					break;
 				}
@@ -305,15 +325,24 @@ void eval(fuspel* rules, struct node** node, replacements* repls,
 						printf(">\n");
 
 						replace_all(rules, _repls->rest, &new_node);
-						use_node(new_node, org_used_count - 1);
+
+						if (org_used_count == 1) {
+							free_node(*_node, 1, 1);
+							use_node(new_node, org_used_count - 1);
+							*_node = new_node;
+						} else {
+							free_node(*_node, org_used_count, 0);
+							(*_node)->kind = NODE_REDIRECT;
+							(*_node)->var1 = new_node;
+							(*_node)->var2 = NULL;
+							(*_node)->used_count = org_used_count;
+							use_node(new_node, org_used_count - 1);
+						}
 
 						for (__repls = _repls->rest;
 								__repls && __repls->replacement.node;
 								__repls = __repls->rest)
 							free_node(__repls->replacement.node, 1, 1);
-
-						free_node(*_node, 1, 1);
-						*_node = new_node;
 
 						rerun = 1;
 						break;
@@ -334,12 +363,17 @@ void eval(fuspel* rules, struct node** node, replacements* repls,
 				if (to_rnf)
 					break;
 
-				eval(rules, (struct node**) &(*node)->var1, repls, to_rnf);
-				eval(rules, (struct node**) &(*node)->var2, repls, to_rnf);
+				eval(rules, (struct node**) &(*node)->var1, to_rnf);
+				eval(rules, (struct node**) &(*node)->var2, to_rnf);
 				break;
 
 			case NODE_CODE:
 				//TODO
+				break;
+
+			case NODE_REDIRECT:
+				remove_redirects(*node);
+				rerun = 1;
 				break;
 		}
 
@@ -349,30 +383,24 @@ void eval(fuspel* rules, struct node** node, replacements* repls,
 #endif
 	} while (rerun);
 
-	if (do_free_repls) {
-		free_repls(repls);
-		my_free(repls);
-	}
+	free_repls(repls);
+	my_free(repls);
 }
 
 expression* eval_main(fuspel* rules) {
 	struct node* main_node = my_calloc(1, sizeof(struct node));
 	expression* expr = my_calloc(1, sizeof(expression));
-	replacements* repls = my_calloc(1, sizeof(replacements));
 
 	main_node->kind = EXPR_NAME;
 	main_node->used_count = 1;
 	main_node->var1 = my_calloc(1, 5);
 	strcpy(main_node->var1, "main");
 
-	eval(rules, &main_node, repls, 0);
+	eval(rules, &main_node, 0);
 
 	cpy_node_to_expression(expr, main_node);
 
 	free_node(main_node, 1, 1);
-
-	free_repls(repls);
-	my_free(repls);
 
 	return expr;
 }

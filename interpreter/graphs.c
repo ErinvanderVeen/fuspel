@@ -10,11 +10,20 @@ void use_node(struct node* node, unsigned int count) {
 
 	node->used_count += count;
 
-	if (node->kind == NODE_LIST ||
-			node->kind == NODE_TUPLE ||
-			node->kind == NODE_APP) {
-		use_node(node->var1, count);
-		use_node(node->var2, count);
+	switch (node->kind) {
+		case NODE_INT:
+		case NODE_NAME:
+		case NODE_CODE:
+			break;
+
+		case NODE_LIST:
+		case NODE_TUPLE:
+		case NODE_APP:
+			use_node(node->var2, count);
+
+		case NODE_REDIRECT:
+			use_node(node->var1, count);
+			break;
 	}
 }
 
@@ -24,11 +33,20 @@ void free_node(struct node* node, unsigned int count, unsigned free_first) {
 
 	node->used_count -= count;
 
-	if (node->kind == NODE_LIST ||
-			node->kind == NODE_TUPLE ||
-			node->kind == NODE_APP) {
-		free_node((struct node*) node->var1, count, 1);
-		free_node((struct node*) node->var2, count, 1);
+	switch (node->kind) {
+		case NODE_INT:
+		case NODE_NAME:
+		case NODE_CODE:
+			break;
+
+		case NODE_LIST:
+		case NODE_TUPLE:
+		case NODE_APP:
+			free_node(node->var2, count, 1);
+
+		case NODE_REDIRECT:
+			free_node(node->var1, count, 1);
+			break;
 	}
 
 	if (node->used_count == 0) {
@@ -38,8 +56,22 @@ void free_node(struct node* node, unsigned int count, unsigned free_first) {
 		if (node->kind == NODE_CODE)
 			my_free(node->var2);
 
+		node->var1 = node->var2 = NULL;
+
 		if (free_first)
 			my_free(node);
+	}
+}
+
+void remove_redirects(struct node *node) {
+	while (node->kind == NODE_REDIRECT) {
+		struct node *child = (struct node*) node->var1;
+		node->kind = child->kind;
+		node->var1 = child->var1;
+		node->var2 = child->var2;
+		child->used_count -= node->used_count;
+		if (child->used_count == 0)
+			my_free(child);
 	}
 }
 
@@ -119,6 +151,10 @@ void cpy_node_to_expression(expression* dst, struct node* src) {
 				dst->var2 = my_calloc(1, sizeof(expression));
 				cpy_node_to_expression(dst->var2, src->var2);
 			}
+			break;
+
+		case NODE_REDIRECT:
+			cpy_node_to_expression(dst, src->var1);
 			break;
 	}
 }

@@ -10,6 +10,8 @@ typedef enum {
 	NODE_LIST,
 	NODE_TUPLE,
 	NODE_APP,
+
+	NODE_REDIRECT    /* Redirect to another node */
 } node_kind;
 
 struct node {
@@ -21,6 +23,8 @@ struct node {
 
 void use_node(struct node* node, unsigned int count);
 void free_node(struct node* node, unsigned int count, unsigned free_first);
+
+void remove_redirects(struct node *node);
 
 void cpy_expression_to_node(struct node* dst, expression* src);
 void cpy_node_to_expression(expression* dst, struct node* src);

@@ -214,6 +214,14 @@ void print_node_to_file(struct node* node, FILE* f, struct visited_nodes *visite
 						(uintptr_t) node, (uintptr_t) node->var2, node->used_count);
 			}
 			break;
+
+		case NODE_REDIRECT:
+			fprintf(f, "%" PRIuPTR " [label=\"%p: Redirection (%d)\", penwidth=%d];\n",
+					(uintptr_t) node, node, node->used_count, node->used_count);
+			print_node_to_file((struct node*) node->var1, f, visited);
+			fprintf(f, "%" PRIuPTR " -> %" PRIuPTR " [label=\"l\", penwidth=%d];\n",
+					(uintptr_t) node, (uintptr_t) node->var1, node->used_count);
+			break;
 	}
 
 	if (close) {
