@@ -341,7 +341,12 @@ void eval(fuspel* rules, struct node** node, bool to_rnf) {
 				break;
 
 			case NODE_CODE:
-				//TODO
+				if (*((unsigned char*) (*node)->var2) == 0) {
+					Code_0* code_fun = (Code_0*) (*node)->var1;
+					code_fun(node);
+					use_node(*node, 1);
+					rerun = 1;
+				}
 				break;
 
 			case NODE_REDIRECT:
