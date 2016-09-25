@@ -40,6 +40,23 @@ void print_token_list(token_list* list) {
 	}
 }
 
+void print_in_list(expression* expr) {
+	if (!expr->var1)
+		return;
+
+	print_expression(expr->var1);
+
+	if (((expression*) expr->var2)->kind == EXPR_LIST) {
+		if (((expression*) expr->var2)->var1) {
+			printf(",");
+			print_in_list(expr->var2);
+		}
+	} else {
+		printf(":");
+		print_expression(expr->var2);
+	}
+}
+
 void print_expression(expression* expr) {
 	if (!expr)
 		return;
@@ -56,15 +73,9 @@ void print_expression(expression* expr) {
 					(void*) expr->var1, *((unsigned char*) expr->var2));
 			break;
 		case EXPR_LIST:
-			if (!expr->var1) {
-				printf("[]");
-			} else {
-				printf("[");
-				print_expression(expr->var1);
-				printf(":");
-				print_expression(expr->var2);
-				printf("]");
-			}
+			printf("[");
+			print_in_list(expr);
+			printf("]");
 			break;
 		case EXPR_TUPLE:
 			printf("(");
