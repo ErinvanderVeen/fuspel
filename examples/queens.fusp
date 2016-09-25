@@ -1,0 +1,32 @@
+add a b = code add a b;
+sub a b = code sub a b;
+gt a b = code gt a b;
+eq a b = code eq a b;
+
+size = 6;
+
+if 0 _ b = b;
+if 1 a _ = a;
+if _ _ _ = not_a_boolean;
+
+// queens :: Int [Int] [[Int]] -> [[Int]]
+queens r b bs = if (gt r size) [b:bs] (try size r b bs);
+
+// try :: Int Int [Int] [[Int]] -> [[Int]]
+try 0 r b bs = bs;
+try c r b bs = try (sub 1 c) r b (if (save c 1 b) (queens (add r 1) [c:b] bs) bs);
+
+// save ::Int Int [Int] -> {0,1}
+save c rd [] = 1;
+save c rd [c_:cs] = if (save_ c c_ rd) 0 (save c (add rd 1) cs);
+
+save_ c c_ rd = gt (add (add (eq c c_) (eq (sub c c_) rd)) (eq (sub c_ c) rd)) 0;
+
+length [] = 0;
+length [x:xs] = add (length xs) 1;
+
+hd [x:xs] = x;
+
+apptup (f,g) x = (f x, g x);
+
+main = apptup (length, hd) (queens 1 [] []);

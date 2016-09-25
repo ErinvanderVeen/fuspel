@@ -1,0 +1,8 @@
+sub a b = code sub a b;
+add a b = code add a b;
+
+acker 0 j = add j 1;
+acker i 0 = acker (sub 1 i) 1;
+acker i j = acker (sub 1 i) (acker i (sub 1 j));
+
+main = acker 3 7;
