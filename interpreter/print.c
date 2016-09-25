@@ -9,7 +9,7 @@
 #include "mem.h"
 
 void print_token(token* tk) {
-	char c;
+	char c = NULL;
 	switch (tk->kind) {
 		case TOKEN_SEMICOLON: c = ';'; break;
 		case TOKEN_COLON:     c = ':'; break;
@@ -28,7 +28,8 @@ void print_token(token* tk) {
 			printf("%d", *((int*) tk->var));
 			return;
 	}
-	printf("%c", c);
+	if (c)
+		printf("%c", c);
 }
 
 void print_token_list(token_list* list) {
