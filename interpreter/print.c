@@ -151,6 +151,7 @@ bool visited_node_exists(struct visited_nodes *list, struct node *node) {
 void print_node_to_file(struct node* node, FILE* f, struct visited_nodes *visited) {
 	bool close = 0;
 	bool do_free_visited = 0;
+	unsigned int borderwidth, edgewidth;
 
 	if (visited_node_exists(visited, node))
 		return;
@@ -171,54 +172,54 @@ void print_node_to_file(struct node* node, FILE* f, struct visited_nodes *visite
 		close = 1;
 	}
 
+	borderwidth = node->used_count > 20 ? 20 : node->used_count;
+	edgewidth = borderwidth > 5 ? 5 : borderwidth;
+
 	switch (node->kind) {
 		case NODE_INT:
-			fprintf(f, "%" PRIuPTR " [label=\"%p: %d (%d)\", penwidth=%d];\n",
-					(uintptr_t) node, node, *((int*) node->var1),
-					node->used_count, node->used_count);
+			fprintf(f, "%" PRIuPTR " [label=\"%d (%d)\", penwidth=%d];\n",
+					(uintptr_t) node, *((int*) node->var1), node->used_count, borderwidth);
 			break;
 
 		case NODE_NAME:
-			fprintf(f, "%" PRIuPTR " [label=\"%p: %s (%d)\", penwidth=%d];\n",
-					(uintptr_t) node, node, (char*) node->var1,
-					node->used_count, node->used_count);
+			fprintf(f, "%" PRIuPTR " [label=\"%s (%d)\", penwidth=%d];\n",
+					(uintptr_t) node, (char*) node->var1, node->used_count, borderwidth);
 			break;
 
 		case NODE_CODE:
-			fprintf(f, "%" PRIuPTR " [label=\"%p: code: %p (%d)\", penwidth=%d];\n",
-					(uintptr_t) node, node, node->var1,
-					node->used_count, node->used_count);
+			fprintf(f, "%" PRIuPTR " [label=\"code: %p (%d)\", penwidth=%d];\n",
+					(uintptr_t) node, node->var1, node->used_count, borderwidth);
 			break;
 
 		case NODE_LIST:
 		case NODE_TUPLE:
 		case NODE_APP:
 			if (node->kind == NODE_LIST)
-				fprintf(f, "%" PRIuPTR " [label=\"%p: List (%d)\", color=gray, penwidth=%d];\n",
-						(uintptr_t) node, node, node->used_count, node->used_count);
+				fprintf(f, "%" PRIuPTR " [label=\"List (%d)\", color=gray, penwidth=%d];\n",
+						(uintptr_t) node, node->used_count, borderwidth);
 			else if (node->kind == NODE_TUPLE)
-				fprintf(f, "%" PRIuPTR " [label=\"%p: Tuple (%d)\", color=gray, penwidth=%d];\n",
-						(uintptr_t) node, node, node->used_count, node->used_count);
+				fprintf(f, "%" PRIuPTR " [label=\"Tuple (%d)\", color=gray, penwidth=%d];\n",
+						(uintptr_t) node, node->used_count, borderwidth);
 			else if (node->kind == NODE_APP)
-				fprintf(f, "%" PRIuPTR " [label=\"%p: App (%d)\", color=gray, penwidth=%d];\n",
-						(uintptr_t) node, node, node->used_count, node->used_count);
+				fprintf(f, "%" PRIuPTR " [label=\"App (%d)\", color=gray, penwidth=%d];\n",
+						(uintptr_t) node, node->used_count, borderwidth);
 
 			if (node->var1) {
 				print_node_to_file((struct node*) node->var1, f, visited);
 				print_node_to_file((struct node*) node->var2, f, visited);
 				fprintf(f, "%" PRIuPTR " -> %" PRIuPTR " [label=\"l\", penwidth=%d];\n",
-						(uintptr_t) node, (uintptr_t) node->var1, node->used_count);
+						(uintptr_t) node, (uintptr_t) node->var1, edgewidth);
 				fprintf(f, "%" PRIuPTR " -> %" PRIuPTR " [label=\"r\", penwidth=%d];\n",
-						(uintptr_t) node, (uintptr_t) node->var2, node->used_count);
+						(uintptr_t) node, (uintptr_t) node->var2, edgewidth);
 			}
 			break;
 
 		case NODE_REDIRECT:
-			fprintf(f, "%" PRIuPTR " [label=\"%p: Redirection (%d)\", color=gray, penwidth=%d];\n",
-					(uintptr_t) node, node, node->used_count, node->used_count);
+			fprintf(f, "%" PRIuPTR " [label=\"Redirection (%d)\", color=gray, penwidth=%d];\n",
+					(uintptr_t) node, node->used_count, borderwidth);
 			print_node_to_file((struct node*) node->var1, f, visited);
 			fprintf(f, "%" PRIuPTR " -> %" PRIuPTR " [penwidth=%d];\n",
-					(uintptr_t) node, (uintptr_t) node->var1, node->used_count);
+					(uintptr_t) node, (uintptr_t) node->var1, edgewidth);
 			break;
 	}
 
