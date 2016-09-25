@@ -2,17 +2,46 @@
 \label{sec:code}
 
 
+\begin{center}
 {\renewcommand{\arraystretch}{1.3}
 	\begin{tabular}{l l l}
-		\textbf{Name} & \textbf{Type} & \textbf{Description} \\\hline
+		\textbf{Name} & \textbf{Type} & \textbf{Description} \\
+
+		\hline\hline\multicolumn{3}{l}{\emph{Integer operations}} \\\hline
+		\fuspel{add a b}
+			& Int $\to$ Int $\to$ Int
+			& Adds $a$ and $b$ \\
 		\fuspel{mul a b}
 			& Int $\to$ Int $\to$ Int
 			& Multiplies $a$ and $b$ \\
 		\fuspel{sub a b}
 			& Int $\to$ Int $\to$ Int
 			& Subtracts $a$ from $b$ \\
+
+		\hline \multicolumn{3}{l}{\emph{Tests}} \\\hline
+		\fuspel{eq a b}
+			& Int $\to$ Int $\to \{0,1\}$
+			& 1 if $a=b$, 0 otherwise \\
+		\fuspel{ge a b}
+			& Int $\to$ Int $\to \{0,1\}$
+			& 1 if $a\ge b$, 0 otherwise \\
+		\fuspel{gt a b}
+			& Int $\to$ Int $\to \{0,1\}$
+			& 1 if $a>b$, 0 otherwise \\
+		\fuspel{le a b}
+			& Int $\to$ Int $\to \{0,1\}$
+			& 1 if $a\le b$, 0 otherwise \\
+		\fuspel{lt a b}
+			& Int $\to$ Int $\to \{0,1\}$
+			& 1 if $a<b$, 0 otherwise \\
+		\fuspel{ne a b}
+			& Int $\to$ Int $\to \{0,1\}$
+			& 1 if $a\neq b$, 0 otherwise \\
+
+		\hline\multicolumn{3}{l}{\emph{Miscellaneous}} \\\hline
 		\fuspel{time}
 			& Int
 			& The current time in seconds since the Unix Epoch. \\
 	\end{tabular}
 }
+\end{center}
