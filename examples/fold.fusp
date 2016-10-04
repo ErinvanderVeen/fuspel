@@ -11,4 +11,4 @@ faclist n = [n:faclist (sub 1 n)];
 
 fac n = prod (faclist n);
 
-main = fac 12;
+main = fac 4;

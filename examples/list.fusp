@@ -1,3 +1,5 @@
+import int;
+
 append []     ys = ys;
 append [x:xs] ys = [x:append xs ys];
 
@@ -9,3 +11,21 @@ isEmpty _  = 0;
 
 hd [x:_] = x;
 tl [_:x] = x;
+
+last [x:[]] = x;
+last [_:xs] = last xs;
+
+init []     = [];
+init [x:[]] = [];
+init [x:xs] = [x:init xs];
+
+length_tl i []     = i;
+length_tl i [_:xs] = length_tl (add 1 i) xs;
+
+length xs = length_tl 0 xs;
+
+repeat 0 _ = [];
+repeat n x = [x:repeat (sub 1 n) x];
+
+map f []     = [];
+map f [x:xs] = [f x:map f xs];

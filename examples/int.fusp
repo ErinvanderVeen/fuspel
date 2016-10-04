@@ -1,0 +1,10 @@
+sub a b = code sub a b;
+add a b = code add a b;
+mul a b = code mul a b;
+
+eq a b = code eq a b;
+ge a b = code ge a b;
+gt a b = code gt a b;
+le a b = code le a b;
+lt a b = code lt a b;
+ne a b = code ne a b;
