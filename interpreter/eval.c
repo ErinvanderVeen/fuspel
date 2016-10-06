@@ -232,8 +232,6 @@ void eval_code_app(fuspel* rules, struct node** node) {
 			f2(node, *args[1], *args[2]);
 	}
 
-	use_node(*node, 1);
-
 	my_free(args);
 }
 

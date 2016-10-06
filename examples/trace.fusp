@@ -1,0 +1,7 @@
+import list;
+
+trace p r = code trace p r;
+
+dup f x = f x x;
+
+main = map (dup trace) [1:[2:[3:[4:[5:[]]]]]];

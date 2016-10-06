@@ -3,7 +3,9 @@
 #include <string.h>
 #include <time.h>
 
+#include "graphs.h"
 #include "mem.h"
+#include "print.h"
 
 void fill_node_int(struct node** node, int i) {
 	unsigned int used_count = (*node)->used_count;
@@ -11,7 +13,7 @@ void fill_node_int(struct node** node, int i) {
 	(*node)->kind = NODE_INT;
 	(*node)->var1 = my_calloc(1, sizeof(int));
 	*((int*) (*node)->var1) = i;
-	use_node(*node, used_count - 1);
+	use_node(*node, used_count);
 }
 
 void fill_node_bool(struct node** node, int i) {
@@ -24,11 +26,19 @@ void fill_node_name(struct node** node, char* s) {
 	(*node)->kind = NODE_NAME;
 	(*node)->var1 = my_calloc(1, strlen(s) + 1);
 	strcpy((*node)->var1, s);
-	use_node(*node, used_count - 1);
+	use_node(*node, used_count);
 }
 
 void code_time(struct node** result) {
 	fill_node_int(result, (int) time(NULL));
+}
+
+void code_trace(struct node** result, struct node *p, struct node *r) {
+	print_node(p);
+	printf("\n");
+	use_node(r, (*result)->used_count);
+	free_node(*result, (*result)->used_count, 1);
+	*result = r;
 }
 
 void code_add(struct node** result, struct node* a, struct node* b) {
@@ -98,6 +108,9 @@ unsigned char code_find(char* name, void** function) {
 	if (!strcmp(name, "time")) {
 		*function = (void(*)(void)) code_time;
 		return 0;
+	} else if (!strcmp(name, "trace")) {
+		*function = (void(*)(void)) code_trace;
+		return 2;
 	} else if (!strcmp(name, "add")) {
 		*function = (void(*)(void)) code_add;
 		return 2;
