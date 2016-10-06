@@ -156,7 +156,6 @@ token_list* parse_expression_no_app(expression* expr, token_list* list) {
 			free_expression(expr);
 		}
 	} else if (list->elem.kind == TOKEN_OPEN_SQ) {
-		expression *expr1, *expr2;
 		token_list* _list;
 
 		expr->kind = EXPR_LIST;
@@ -165,24 +164,51 @@ token_list* parse_expression_no_app(expression* expr, token_list* list) {
 			return list->rest->rest;
 		}
 
-		expr1 = my_calloc(1, sizeof(expression));
-		expr2 = my_calloc(1, sizeof(expression));
+		expr->var1 = my_calloc(1, sizeof(expression));
+		expr->var2 = my_calloc(1, sizeof(expression));
 
-		_list = parse_expression(expr1, list->rest);
-		if (!_list || _list->elem.kind != TOKEN_COLON) {
-			free_expression(expr1);
-			my_free(expr1);
-			my_free(expr2);
-		} else {
-			_list = parse_expression(expr2, _list->rest);
+		_list = parse_expression(expr->var1, list->rest);
+		if (!_list ||
+				(_list->elem.kind != TOKEN_COLON &&
+				 _list->elem.kind != TOKEN_COMMA &&
+				 _list->elem.kind != TOKEN_CLOSE_SQ)) {
+			free_expression(expr);
+		} else if (_list->elem.kind == TOKEN_CLOSE_SQ) {
+			((expression *) expr->var2)->kind = EXPR_LIST;
+			((expression *) expr->var2)->var1 = NULL;
+			((expression *) expr->var2)->var2 = NULL;
+			return _list->rest;
+		} else if (_list->elem.kind == TOKEN_COMMA) {
+			expression* _expr = expr;
+			while (_list && _list->elem.kind == TOKEN_COMMA) {
+				_expr = _expr->var2;
+				_expr->kind = EXPR_LIST;
+				_expr->var1 = my_calloc(1, sizeof(expression));
+				_expr->var2 = my_calloc(1, sizeof(expression));
+				_list = parse_expression(_expr->var1, _list->rest);
+			}
+			if (!_list ||
+					(_list->elem.kind != TOKEN_CLOSE_SQ &&
+					 _list->elem.kind != TOKEN_COLON)) {
+				free_expression(expr);
+			} else if (_list->elem.kind == TOKEN_COLON) {
+				_list = parse_expression(((expression*) expr->var2)->var2, _list->rest);
+				if (!_list || _list->elem.kind != TOKEN_CLOSE_SQ) {
+					free_expression(expr);
+				} else {
+					return _list->rest;
+				}
+			} else if (_list->elem.kind == TOKEN_CLOSE_SQ) {
+				((expression*) _expr->var2)->kind = EXPR_LIST;
+				((expression*) _expr->var2)->var1 = NULL;
+				((expression*) _expr->var2)->var2 = NULL;
+				return _list->rest;
+			}
+		} else if (_list->elem.kind == TOKEN_COLON) {
+			_list = parse_expression(expr->var2, _list->rest);
 			if (!_list || _list->elem.kind != TOKEN_CLOSE_SQ) {
-				free_expression(expr1);
-				free_expression(expr2);
-				my_free(expr1);
-				my_free(expr2);
+				free_expression(expr);
 			} else {
-				expr->var1 = expr1;
-				expr->var2 = expr2;
 				return _list->rest;
 			}
 		}

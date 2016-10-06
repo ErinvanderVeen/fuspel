@@ -24,8 +24,11 @@
 		\alt <Simple-list>
 		\alt <Simple-tuple>
 
-	<Simple-list> ::= `[' <Simple-expr> `:' <Simple-list> `]'
+	<Simple-list> ::= `[' <Simple-expr-list> `:' <Simple-list> `]'
+		\alt `[' <Simple-expr-list> `]'
 		\alt `[]'
+
+	<Simple-expr-list> ::= <Simple-expr> `,' <Simple-expr-list> | <Simple-expr>
 	
 	<Simple-tuple> ::= `(' <Simple-expr> `,' <Simple-expr> `)'
 
