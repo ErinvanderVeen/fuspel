@@ -1,6 +1,11 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef _FUSPEL_CLI
+#include <argp.h>
+#include <stdbool.h>
+#endif
+
 #include "eval.h"
 #include "lex.h"
 #include "mem.h"
@@ -56,30 +61,58 @@ fuspel* import(fuspel* already_parsed, char* fname) {
 	return pgm;
 }
 
+#ifdef _FUSPEL_CLI
+const char *argp_prog_version = "fuspel";
+const char *argp_prog_bugs = "<info@camilstaps.nl>";
+static char doc[] = "Interpret a fuspel program";
+static char args_doc[] = "MODULE [MODULE [MODULE [..]]]";
+static struct argp_option options[] = {
+	{ "print-program", 'P', 0, 0, "Print the parsed program before execution" },
+	{ 0 }
+};
+struct environment {
+	fuspel* program;
+	bool printProgram;
+};
+
+static error_t parse_opt(int key, char *arg, struct argp_state *state) {
+	struct environment *env = state->input;
+	switch (key) {
+		case 'P':
+			env->printProgram = true;
+			break;
+		case ARGP_KEY_ARG:
+			env->program = import(env->program, arg);
+			return 0;
+		default:
+			return ARGP_ERR_UNKNOWN;
+	}
+	return 0;
+}
+
+static struct argp argp = { options, parse_opt, args_doc, doc, 0, 0, 0 };
+
 int main(int argc, char* argv[]) {
 	expression* result;
-	fuspel* pgm = NULL;
 	int i;
+	struct environment env;
 
-	if (argc < 2) {
-		fprintf(stderr, "Usage: %s file [file [file [..]]]\n", argv[0]);
-		exit(EXIT_FAILURE);
-	}
-
-	for (i = 1; i < argc; i++) {
-		pgm = import(pgm, argv[i]);
-	}
+	env.printProgram = false;
+	env.program = NULL;
+	argp_parse(&argp, argc, argv, 0, 0, &env);
 	
-	if (!pgm) {
+	if (!env.program) {
 		fprintf(stderr, "Couldn't parse program.\n");
 		exit(EXIT_FAILURE);
 	}
 
-	printf("\n");
-	print_fuspel(pgm);
-	printf("\n\n");
+	if (env.printProgram) {
+		printf("\n");
+		print_fuspel(env.program);
+		printf("\n\n");
+	}
 
-	result = eval_main(pgm);
+	result = eval_main(env.program);
 	if (result) {
 		print_expression(result);
 		printf("\n");
@@ -88,8 +121,9 @@ int main(int argc, char* argv[]) {
 		my_free(result);
 	}
 
-	free_fuspel(pgm);
-	my_free(pgm);
+	free_fuspel(env.program);
+	my_free(env.program);
 
 	return 0;
 }
+#endif
