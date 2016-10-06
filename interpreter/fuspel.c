@@ -26,29 +26,25 @@ fuspel* import(fuspel* already_parsed, char* fname) {
 
 	f = fopen(fname_, "r");
 	if (!f) {
-		fprintf(stderr, "Couldn't read %s\n", fname_);
+		fprintf(stderr, "Couldn't read %s.\n", fname_);
 		exit(EXIT_FAILURE);
 	}
-
-	printf("Lexing %s...\n", fname_);
 
 	while (!feof(f)) {
 		char program[LINE_LENGTH];
 		if (!fgets(program, LINE_LENGTH, f)) {
 			if (feof(f))
 				break;
-			fprintf(stderr, "Couldn't read input.\n");
+			fprintf(stderr, "Couldn't read %s.\n", fname_);
 			exit(EXIT_FAILURE);
 		}
 
 		tokens = lex(tokens, program);
 		if (!tokens) {
-			fprintf(stderr, "Couldn't lex program.\n");
+			fprintf(stderr, "Couldn't lex module %s.\n", fname);
 			exit(EXIT_FAILURE);
 		}
 	}
-
-	printf("Parsing %s...\n", fname_);
 
 	my_free(fname_);
 
@@ -94,7 +90,6 @@ static struct argp argp = { options, parse_opt, args_doc, doc, 0, 0, 0 };
 
 int main(int argc, char* argv[]) {
 	expression* result;
-	int i;
 	struct environment env;
 
 	env.printProgram = false;
