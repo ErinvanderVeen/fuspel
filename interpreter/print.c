@@ -175,12 +175,6 @@ char *get_app_name(struct node *node) {
 	return name;
 }
 
-void *get_app_root(struct node *node) {
-	while (node->kind == NODE_APP)
-		node = node->var1;
-	return node;
-}
-
 void print_node_to_file(struct node *node, FILE *f, struct visited_nodes *visited) {
 	bool close = 0;
 	bool do_free_visited = 0;
@@ -210,7 +204,7 @@ void print_node_to_file(struct node *node, FILE *f, struct visited_nodes *visite
 
 	switch (node->kind) {
 		case NODE_INT:
-			fprintf(f, "%" PRIuPTR " [label=\"%d\"];\n",
+			fprintf(f, "%" PRIuPTR " [shape=diamond,label=\"%d\"];\n",
 					(uintptr_t) node, *((int*) node->var1));
 			break;
 
@@ -218,7 +212,6 @@ void print_node_to_file(struct node *node, FILE *f, struct visited_nodes *visite
 			fprintf(f, "%" PRIuPTR " [label=\"%s\"];\n",
 					(uintptr_t) node, (char*) node->var1);
 			break;
-
 		case NODE_CODE:
 			fprintf(f, "%" PRIuPTR " [label=\"%s\"];\n",
 					(uintptr_t) node, code_find_name(node->var1));
@@ -227,9 +220,7 @@ void print_node_to_file(struct node *node, FILE *f, struct visited_nodes *visite
 		case NODE_APP:
 			args_list = flatten_app_args(&node, false);
 			app_name = get_app_name(*args_list[0]);
-			fprintf(f, "%" PRIuPTR " [label=\"%s",
-					(uintptr_t) node,
-					app_name);
+			fprintf(f, "%" PRIuPTR " [label=\"%s", (uintptr_t) node, app_name);
 			my_free(app_name);
 			for (arg_i = 1; args_list[arg_i]; arg_i++)
 				fprintf(f, "|<%u>", arg_i);
@@ -237,7 +228,7 @@ void print_node_to_file(struct node *node, FILE *f, struct visited_nodes *visite
 			for (arg_i = 1; args_list[arg_i]; arg_i++) {
 				print_node_to_file(*args_list[arg_i], f, visited);
 				fprintf(f, "%" PRIuPTR ":%d -> %" PRIuPTR ";\n",
-						(uintptr_t) node, //(*args_list[0])->var1,
+						(uintptr_t) node,
 						arg_i,
 						(uintptr_t) *args_list[arg_i]);
 			}
@@ -257,9 +248,6 @@ void print_node_to_file(struct node *node, FILE *f, struct visited_nodes *visite
 			else if (node->kind == NODE_TUPLE)
 				fprintf(f, "%" PRIuPTR " [label=\"Tuple|<l>|<r>\", color=gray, fontcolor=gray];\n",
 						(uintptr_t) node);
-			else if (node->kind == NODE_APP)
-				fprintf(f, "%" PRIuPTR " [label=\"App|<l>|<r>\", color=gray, fontcolor=gray];\n",
-						(uintptr_t) node);
 
 			print_node_to_file((struct node*) node->var1, f, visited);
 			print_node_to_file((struct node*) node->var2, f, visited);
@@ -270,7 +258,7 @@ void print_node_to_file(struct node *node, FILE *f, struct visited_nodes *visite
 			break;
 
 		case NODE_REDIRECT:
-			fprintf(f, "%" PRIuPTR " [label=\"Redirection\", color=gray, fontcolor=gray];\n",
+			fprintf(f, "%" PRIuPTR " [label=\"Redirect\", color=gray, fontcolor=gray];\n",
 					(uintptr_t) node);
 			print_node_to_file((struct node*) node->var1, f, visited);
 			fprintf(f, "%" PRIuPTR " -> %" PRIuPTR ";\n",
