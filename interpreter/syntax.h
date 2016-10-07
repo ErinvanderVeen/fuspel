@@ -5,7 +5,7 @@
 
 /* TOKENS */
 
-typedef enum {
+enum token_kind {
 	TOKEN_SEMICOLON, /* ; */
 	TOKEN_EQUALS,    /* = */
 	TOKEN_OPEN_SQ,   /* [ */
@@ -18,69 +18,69 @@ typedef enum {
 	TOKEN_IMPORT,    /* import */
 	TOKEN_NAME,
 	TOKEN_INT
-} token_kind;
+};
 
-typedef struct {
-	token_kind kind;
-	void* var;
-} token;
+struct token {
+	enum token_kind kind;
+	void *var;
+};
 
-typedef struct token_list {
-	token elem;
-	struct token_list* rest;
-} token_list;
+struct token_list {
+	struct token elem;
+	struct token_list *rest;
+};
 
-void free_token(token*);
-void free_token_list(token_list*);
+void free_token(struct token*);
+void free_token_list(struct token_list*);
 
 /* ELEMENTS */
 
-typedef enum {
+enum expr_kind {
 	EXPR_INT,        /* var1: pointer to int */
 	EXPR_NAME,       /* var1: pointer to char* */
 	EXPR_CODE,       /* var1: pointer to function;
                         var2: pointer to unsigned char (nr. of arguments) */
-	EXPR_LIST,       /* var1, var2: pointers to expression OR (nil) */
-	EXPR_TUPLE,      /* var1, var2: pointers to expression */
-	EXPR_APP         /* var1, var2: pointers to expression */
-} expr_kind;
+	EXPR_LIST,       /* var1, var2: pointers to struct expression OR (nil) */
+	EXPR_TUPLE,      /* var1, var2: pointers to struct expression */
+	EXPR_APP         /* var1, var2: pointers to struct expression */
+};
 
-typedef struct {
-	expr_kind kind;
-	void* var1;
-	void* var2;
-} expression;
+struct expression {
+	enum expr_kind kind;
+	void *var1;
+	void *var2;
+};
 
-typedef struct arg_list {
-	expression elem;
-	struct arg_list* rest;
-} arg_list;
+struct arg_list {
+	struct expression elem;
+	struct arg_list *rest;
+};
 
-typedef struct {
-	char* name;
-	arg_list* args;
-	expression rhs;
-} rewrite_rule;
+struct rewrite_rule {
+	char *name;
+	struct arg_list *args;
+	struct expression rhs;
+};
 
-typedef struct fuspel {
-	rewrite_rule rule;
-	struct fuspel* rest;
-} fuspel;
+struct fuspel {
+	struct rewrite_rule rule;
+	struct fuspel *rest;
+};
 
-bool empty_args_list(arg_list*);
-unsigned char len_arg_list(arg_list*);
+bool empty_args_list(struct arg_list*);
+unsigned char len_arg_list(struct arg_list*);
 
-void cpy_expression(expression* dst, expression* src);
-bool eq_expression(expression*, expression*);
+void cpy_expression(struct expression *dst, struct expression *src);
+bool eq_expression(struct expression*, struct expression*);
 
-void concat_fuspel(fuspel* start, fuspel* end);
-fuspel* push_fuspel(fuspel*);
-fuspel* pop_fuspel(fuspel*);
-fuspel* popn_fuspel(fuspel*, unsigned char);
+void concat_fuspel(struct fuspel *start, struct fuspel *end);
+struct fuspel *push_fuspel(struct fuspel*);
+struct fuspel *pop_fuspel(struct fuspel*);
+struct fuspel *popn_fuspel(struct fuspel*, unsigned char);
 
-void free_expression(expression*);
-void free_arg_list(arg_list*);
-void free_rewrite_rule(rewrite_rule*);
-void free_fuspel(fuspel*);
+void free_expression(struct expression*);
+void free_arg_list(struct arg_list*);
+void free_rewrite_rule(struct rewrite_rule*);
+void free_fuspel(struct fuspel*);
 
 #endif

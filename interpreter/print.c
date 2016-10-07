@@ -7,10 +7,9 @@
 #include "code.h"
 #endif
 
-#include "log.h"
 #include "mem.h"
 
-void print_token(token* tk) {
+void print_token(struct token *tk) {
 	char c = NULL;
 	switch (tk->kind) {
 		case TOKEN_SEMICOLON: c = ';'; break;
@@ -34,7 +33,7 @@ void print_token(token* tk) {
 		printf("%c", c);
 }
 
-void print_token_list(token_list* list) {
+void print_token_list(struct token_list *list) {
 	print_token(&list->elem);
 	if (list->rest) {
 		printf(list->elem.kind == TOKEN_SEMICOLON ? "\n" : " ");
@@ -42,14 +41,14 @@ void print_token_list(token_list* list) {
 	}
 }
 
-void print_in_list(expression* expr) {
+void print_in_list(struct expression *expr) {
 	if (!expr->var1)
 		return;
 
 	print_expression(expr->var1);
 
-	if (((expression*) expr->var2)->kind == EXPR_LIST) {
-		if (((expression*) expr->var2)->var1) {
+	if (((struct expression*) expr->var2)->kind == EXPR_LIST) {
+		if (((struct expression*) expr->var2)->var1) {
 			printf(",");
 			print_in_list(expr->var2);
 		}
@@ -59,7 +58,7 @@ void print_in_list(expression* expr) {
 	}
 }
 
-void print_expression(expression* expr) {
+void print_expression(struct expression *expr) {
 	if (!expr)
 		return;
 
@@ -87,22 +86,22 @@ void print_expression(expression* expr) {
 			printf(")");
 			break;
 		case EXPR_APP:
-			if (((expression*) expr->var1)->kind == EXPR_APP)
+			if (((struct expression*) expr->var1)->kind == EXPR_APP)
 				printf("(");
 			print_expression(expr->var1);
-			if (((expression*) expr->var1)->kind == EXPR_APP)
+			if (((struct expression*) expr->var1)->kind == EXPR_APP)
 				printf(")");
 			printf(" ");
-			if (((expression*) expr->var2)->kind == EXPR_APP)
+			if (((struct expression*) expr->var2)->kind == EXPR_APP)
 				printf("(");
 			print_expression(expr->var2);
-			if (((expression*) expr->var2)->kind == EXPR_APP)
+			if (((struct expression*) expr->var2)->kind == EXPR_APP)
 				printf(")");
 			break;
 	}
 }
 
-void print_arg_list(arg_list* args) {
+void print_arg_list(struct arg_list *args) {
 	if (!args)
 		return;
 
@@ -112,7 +111,7 @@ void print_arg_list(arg_list* args) {
 		print_arg_list(args->rest);
 }
 
-void print_rewrite_rule(rewrite_rule* rule) {
+void print_rewrite_rule(struct rewrite_rule *rule) {
 	printf("%s ", rule->name);
 	print_arg_list(rule->args);
 	printf("= ");
@@ -120,7 +119,7 @@ void print_rewrite_rule(rewrite_rule* rule) {
 	printf(";");
 }
 
-void print_fuspel(fuspel* rules) {
+void print_fuspel(struct fuspel *rules) {
 	print_rewrite_rule(&rules->rule);
 	if (rules->rest) {
 		printf("\n");
@@ -128,8 +127,8 @@ void print_fuspel(fuspel* rules) {
 	}
 }
 
-void print_node(struct node* node) {
-	expression* e = my_calloc(1, sizeof(expression));
+void print_node(struct node *node) {
+	struct expression *e = my_calloc(1, sizeof(struct expression));
 	cpy_node_to_expression(e, node);
 	print_expression(e);
 	free_expression(e);
@@ -182,7 +181,7 @@ void *get_app_root(struct node *node) {
 	return node;
 }
 
-void print_node_to_file(struct node* node, FILE* f, struct visited_nodes *visited) {
+void print_node_to_file(struct node *node, FILE *f, struct visited_nodes *visited) {
 	bool close = 0;
 	bool do_free_visited = 0;
 

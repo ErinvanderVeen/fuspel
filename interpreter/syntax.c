@@ -4,23 +4,23 @@
 
 #include "mem.h"
 
-void free_token(token* tk) {
+void free_token(struct token *tk) {
 	if (tk->var)
 		my_free(tk->var);
 }
 
-void free_token_list(token_list* list) {
+void free_token_list(struct token_list *list) {
 	free_token(&list->elem);
 	if (list->rest)
 		free_token_list(list->rest);
 	my_free(list->rest);
 }
 
-bool empty_args_list(arg_list* list) {
+bool empty_args_list(struct arg_list *list) {
 	return !list;
 }
 
-unsigned char len_arg_list(arg_list* list) {
+unsigned char len_arg_list(struct arg_list *list) {
 	unsigned char i = 0;
 	while (list) {
 		i++;
@@ -29,7 +29,7 @@ unsigned char len_arg_list(arg_list* list) {
 	return i;
 }
 
-void cpy_expression(expression* dst, expression* src) {
+void cpy_expression(struct expression *dst, struct expression *src) {
 	free_expression(dst);
 	dst->kind = src->kind;
 	switch (dst->kind) {
@@ -51,15 +51,15 @@ void cpy_expression(expression* dst, expression* src) {
 				break;
 		case EXPR_TUPLE:
 		case EXPR_APP:
-			dst->var1 = my_calloc(1, sizeof(expression));
-			dst->var2 = my_calloc(1, sizeof(expression));
+			dst->var1 = my_calloc(1, sizeof(struct expression));
+			dst->var2 = my_calloc(1, sizeof(struct expression));
 			cpy_expression(dst->var1, src->var1);
 			cpy_expression(dst->var2, src->var2);
 			break;
 	}
 }
 
-bool eq_expression(expression* a, expression* b) {
+bool eq_expression(struct expression *a, struct expression *b) {
 	if (a->kind != b->kind)
 		return 0;
 
@@ -83,7 +83,7 @@ bool eq_expression(expression* a, expression* b) {
 	return 0;
 }
 
-void concat_fuspel(fuspel* start, fuspel* end) {
+void concat_fuspel(struct fuspel *start, struct fuspel *end) {
 	while (start) {
 		if (!start->rest) {
 			start->rest = end;
@@ -93,18 +93,18 @@ void concat_fuspel(fuspel* start, fuspel* end) {
 	}
 }
 
-fuspel* push_fuspel(fuspel* rules) {
-	fuspel* new_rules = my_calloc(1, sizeof(fuspel));
+struct fuspel *push_fuspel(struct fuspel *rules) {
+	struct fuspel *new_rules = my_calloc(1, sizeof(struct fuspel));
 	new_rules->rest = rules;
 	return new_rules;
 }
 
-fuspel* pop_fuspel(fuspel* rules) {
+struct fuspel *pop_fuspel(struct fuspel *rules) {
 	free_rewrite_rule(&rules->rule);
 	return rules->rest;
 }
 
-fuspel* popn_fuspel(fuspel* rules, unsigned char n) {
+struct fuspel *popn_fuspel(struct fuspel *rules, unsigned char n) {
 	while (n > 0) {
 		rules = pop_fuspel(rules);
 		n--;
@@ -112,7 +112,7 @@ fuspel* popn_fuspel(fuspel* rules, unsigned char n) {
 	return rules;
 }
 
-void free_expression(expression* expr) {
+void free_expression(struct expression *expr) {
 	if (!expr)
 		return;
 
@@ -137,14 +137,14 @@ void free_expression(expression* expr) {
 	expr->var1 = expr->var2 = NULL;
 }
 
-void free_arg_list(arg_list* list) {
+void free_arg_list(struct arg_list *list) {
 	free_expression(&list->elem);
 	if (list->rest)
 		free_arg_list(list->rest);
 	my_free(list->rest);
 }
 
-void free_rewrite_rule(rewrite_rule* rule) {
+void free_rewrite_rule(struct rewrite_rule *rule) {
 	my_free(rule->name);
 	if (rule->args)
 		free_arg_list(rule->args);
@@ -152,7 +152,7 @@ void free_rewrite_rule(rewrite_rule* rule) {
 	free_expression(&rule->rhs);
 }
 
-void free_fuspel(fuspel* rules) {
+void free_fuspel(struct fuspel *rules) {
 	free_rewrite_rule(&rules->rule);
 	if (rules->rest)
 		free_fuspel(rules->rest);

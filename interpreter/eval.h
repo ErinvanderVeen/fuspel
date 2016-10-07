@@ -3,6 +3,6 @@
 
 #include "syntax.h"
 
-expression* eval_main(fuspel*);
+struct expression *eval_main(struct fuspel*);
 
 #endif

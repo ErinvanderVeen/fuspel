@@ -8,10 +8,10 @@ typedef void (Code_0) (struct node**);
 typedef void (Code_1) (struct node**, struct node*);
 typedef void (Code_2) (struct node**, struct node*, struct node*);
 
-unsigned char code_find(char* name, void** function);
+unsigned char code_find(char *name, void **function);
 
 #ifdef _FUSPEL_DEBUG
-char *code_find_name(void* f);
+char *code_find_name(void *f);
 #endif
 
 #endif

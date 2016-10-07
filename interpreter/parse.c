@@ -3,12 +3,11 @@
 #include <string.h>
 
 #include "code.h"
-#include "log.h"
 #include "mem.h"
 
-extern fuspel* import(fuspel* already_parsed, char* name);
+extern struct fuspel *import(struct fuspel *already_parsed, char *name);
 
-token_list* parse_name(char** name, token_list* list) {
+struct token_list *parse_name(char **name, struct token_list *list) {
 	if (list->elem.kind != TOKEN_NAME)
 		return NULL;
 
@@ -19,8 +18,8 @@ token_list* parse_name(char** name, token_list* list) {
 	return list->rest;
 }
 
-token_list* parse_simple_expression(expression* expr, token_list* list) {
-	expression* _expr;
+struct token_list *parse_simple_expression(struct expression *expr, struct token_list *list) {
+	struct expression *_expr;
 
 	switch (list->elem.kind) {
 		case TOKEN_INT:
@@ -36,7 +35,7 @@ token_list* parse_simple_expression(expression* expr, token_list* list) {
 
 		case TOKEN_CODE:
 			if (list->rest && list->rest->elem.kind == TOKEN_NAME) {
-				char* name;
+				char *name;
 				expr->kind = EXPR_CODE;
 				list = parse_name(&name, list->rest);
 				expr->var2 = my_calloc(1, sizeof(unsigned char));
@@ -57,12 +56,12 @@ token_list* parse_simple_expression(expression* expr, token_list* list) {
 					return list->rest;
 					break;
 				case TOKEN_COMMA:
-					_expr = my_calloc(1, sizeof(expression));
+					_expr = my_calloc(1, sizeof(struct expression));
 					cpy_expression(_expr, expr);
 					free_expression(expr);
 					expr->kind = EXPR_TUPLE;
 					expr->var1 = _expr;
-					expr->var2 = my_calloc(1, sizeof(expression));
+					expr->var2 = my_calloc(1, sizeof(struct expression));
 					list = parse_simple_expression(expr->var2, list->rest);
 					if (!list || list->elem.kind != TOKEN_CLOSE_P) {
 						free_expression(_expr);
@@ -86,8 +85,8 @@ token_list* parse_simple_expression(expression* expr, token_list* list) {
 			if (list->elem.kind == TOKEN_CLOSE_SQ)
 				return list->rest;
 
-			expr->var1 = my_calloc(1, sizeof(expression));
-			expr->var2 = my_calloc(1, sizeof(expression));
+			expr->var1 = my_calloc(1, sizeof(struct expression));
+			expr->var2 = my_calloc(1, sizeof(struct expression));
 
 			list = parse_simple_expression(expr->var1, list);
 
@@ -115,11 +114,11 @@ token_list* parse_simple_expression(expression* expr, token_list* list) {
 	}
 }
 
-token_list* parse_arg_list(arg_list** args, token_list* list) {
+struct token_list *parse_arg_list(struct arg_list **args, struct token_list *list) {
 	if (list->elem.kind == TOKEN_EQUALS)
 		return list;
 
-	*args = my_calloc(1, sizeof(arg_list));
+	*args = my_calloc(1, sizeof(struct arg_list));
 
 	list = parse_simple_expression(&(*args)->elem, list);
 	if (!list)
@@ -130,23 +129,23 @@ token_list* parse_arg_list(arg_list** args, token_list* list) {
 	return list;
 }
 
-token_list* parse_expression(expression*, token_list*);
+struct token_list *parse_expression(struct expression*, struct token_list*);
 
-token_list* parse_expression_no_app(expression* expr, token_list* list) {
+struct token_list *parse_expression_no_app(struct expression *expr, struct token_list *list) {
 	if (list->elem.kind == TOKEN_OPEN_P) {
-		token_list* _list = parse_expression(expr, list->rest);
+		struct token_list *_list = parse_expression(expr, list->rest);
 		if (_list) {
 			if (_list->elem.kind == TOKEN_CLOSE_P) {
 				return _list->rest;
 			} else if (_list->elem.kind == TOKEN_COMMA) {
-				expression* _expr = my_calloc(1, sizeof(expression));
+				struct expression *_expr = my_calloc(1, sizeof(struct expression));
 
 				cpy_expression(_expr, expr);
 				free_expression(expr);
 				expr->kind = EXPR_TUPLE;
 				expr->var1 = _expr;
 
-				expr->var2 = my_calloc(1, sizeof(expression));
+				expr->var2 = my_calloc(1, sizeof(struct expression));
 
 				_list = parse_expression(expr->var2, _list->rest);
 				if (_list && _list->elem.kind == TOKEN_CLOSE_P) {
@@ -156,7 +155,7 @@ token_list* parse_expression_no_app(expression* expr, token_list* list) {
 			free_expression(expr);
 		}
 	} else if (list->elem.kind == TOKEN_OPEN_SQ) {
-		token_list* _list;
+		struct token_list *_list;
 
 		expr->kind = EXPR_LIST;
 
@@ -164,8 +163,8 @@ token_list* parse_expression_no_app(expression* expr, token_list* list) {
 			return list->rest->rest;
 		}
 
-		expr->var1 = my_calloc(1, sizeof(expression));
-		expr->var2 = my_calloc(1, sizeof(expression));
+		expr->var1 = my_calloc(1, sizeof(struct expression));
+		expr->var2 = my_calloc(1, sizeof(struct expression));
 
 		_list = parse_expression(expr->var1, list->rest);
 		if (!_list ||
@@ -174,17 +173,17 @@ token_list* parse_expression_no_app(expression* expr, token_list* list) {
 				 _list->elem.kind != TOKEN_CLOSE_SQ)) {
 			free_expression(expr);
 		} else if (_list->elem.kind == TOKEN_CLOSE_SQ) {
-			((expression *) expr->var2)->kind = EXPR_LIST;
-			((expression *) expr->var2)->var1 = NULL;
-			((expression *) expr->var2)->var2 = NULL;
+			((struct expression *) expr->var2)->kind = EXPR_LIST;
+			((struct expression *) expr->var2)->var1 = NULL;
+			((struct expression *) expr->var2)->var2 = NULL;
 			return _list->rest;
 		} else if (_list->elem.kind == TOKEN_COMMA) {
-			expression* _expr = expr;
+			struct expression *_expr = expr;
 			while (_list && _list->elem.kind == TOKEN_COMMA) {
 				_expr = _expr->var2;
 				_expr->kind = EXPR_LIST;
-				_expr->var1 = my_calloc(1, sizeof(expression));
-				_expr->var2 = my_calloc(1, sizeof(expression));
+				_expr->var1 = my_calloc(1, sizeof(struct expression));
+				_expr->var2 = my_calloc(1, sizeof(struct expression));
 				_list = parse_expression(_expr->var1, _list->rest);
 			}
 			if (!_list ||
@@ -192,16 +191,16 @@ token_list* parse_expression_no_app(expression* expr, token_list* list) {
 					 _list->elem.kind != TOKEN_COLON)) {
 				free_expression(expr);
 			} else if (_list->elem.kind == TOKEN_COLON) {
-				_list = parse_expression(((expression*) expr->var2)->var2, _list->rest);
+				_list = parse_expression(((struct expression*) expr->var2)->var2, _list->rest);
 				if (!_list || _list->elem.kind != TOKEN_CLOSE_SQ) {
 					free_expression(expr);
 				} else {
 					return _list->rest;
 				}
 			} else if (_list->elem.kind == TOKEN_CLOSE_SQ) {
-				((expression*) _expr->var2)->kind = EXPR_LIST;
-				((expression*) _expr->var2)->var1 = NULL;
-				((expression*) _expr->var2)->var2 = NULL;
+				((struct expression*) _expr->var2)->kind = EXPR_LIST;
+				((struct expression*) _expr->var2)->var1 = NULL;
+				((struct expression*) _expr->var2)->var2 = NULL;
 				return _list->rest;
 			}
 		} else if (_list->elem.kind == TOKEN_COLON) {
@@ -219,7 +218,7 @@ token_list* parse_expression_no_app(expression* expr, token_list* list) {
 	return list;
 }
 
-token_list* parse_expression(expression* expr, token_list* list) {
+struct token_list *parse_expression(struct expression *expr, struct token_list *list) {
 	list = parse_expression_no_app(expr, list);
 	if (!list)
 		return NULL;
@@ -230,14 +229,14 @@ token_list* parse_expression(expression* expr, token_list* list) {
 			list->elem.kind != TOKEN_COLON &&
 			list->elem.kind != TOKEN_COMMA) {
 	
-		expression* _expr = my_calloc(1, sizeof(expression));
+		struct expression *_expr = my_calloc(1, sizeof(struct expression));
 
 		cpy_expression(_expr, expr);
 		free_expression(expr);
 		expr->kind = EXPR_APP;
 		expr->var1 = _expr;
 
-		expr->var2 = my_calloc(1, sizeof(expression));
+		expr->var2 = my_calloc(1, sizeof(struct expression));
 
 		list = parse_expression_no_app(expr->var2, list);
 		if (!list) {
@@ -249,20 +248,18 @@ token_list* parse_expression(expression* expr, token_list* list) {
 	return list;
 }
 
-token_list* parse_rule(rewrite_rule* rule, token_list* list) {
+struct token_list *parse_rule(struct rewrite_rule *rule, struct token_list *list) {
 	list = parse_name(&rule->name, list);
 	if (!list)
 		return NULL;
 
 	list = parse_arg_list(&rule->args, list);
 	if (!list) {
-		log_debug("parse_rule: error in arg_list");
 		my_free(rule->name);
 		return NULL;
 	}
 
 	if (list->elem.kind != TOKEN_EQUALS) {
-		log_debug("parse_rule: no =");
 		my_free(rule->name);
 		free_arg_list(rule->args);
 		return NULL;
@@ -273,9 +270,9 @@ token_list* parse_rule(rewrite_rule* rule, token_list* list) {
 	return list;
 }
 
-fuspel* parse(token_list* list) {
-	fuspel* rules = NULL;
-	fuspel* return_rules;
+struct fuspel *parse(struct token_list *list) {
+	struct fuspel *rules = NULL;
+	struct fuspel *return_rules;
 
 	while (list && list->elem.kind == TOKEN_SEMICOLON)
 		list = list->rest;
@@ -296,7 +293,7 @@ fuspel* parse(token_list* list) {
 		return_rules = rules;
 		while (rules->rest) rules = rules->rest;
 	} else {
-		return_rules = rules = my_calloc(1, sizeof(fuspel));
+		return_rules = rules = my_calloc(1, sizeof(struct fuspel));
 
 		list = parse_rule(&rules->rule, list);
 		if (!list)

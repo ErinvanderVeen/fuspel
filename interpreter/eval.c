@@ -11,27 +11,27 @@
 #include "print.h"
 #endif
 
-typedef struct {
-	char* name;
-	struct node* node;
-} replacement;
+struct replacement {
+	char *name;
+	struct node *node;
+};
 
-typedef struct replacements {
-	replacement replacement;
-	struct replacements* rest;
-} replacements;
+struct replacements {
+	struct replacement replacement;
+	struct replacements *rest;
+};
 
-void eval(fuspel* rules, struct node** node, bool to_rnf);
+void eval(struct fuspel *rules, struct node **node, bool to_rnf);
 
-void push_repl(replacements* repls, char* name, struct node* node) {
+void push_repl(struct replacements *repls, char *name, struct node *node) {
 	while (repls->rest) repls = repls->rest;
-	repls->rest = my_calloc(1, sizeof(replacements));
+	repls->rest = my_calloc(1, sizeof(struct replacements));
 	repls->rest->replacement.name = name;
 	repls->rest->replacement.node = node;
 	repls->rest->rest = NULL;
 }
 
-void free_repls(replacements* repls) {
+void free_repls(struct replacements *repls) {
 	if (repls) {
 		if (repls->rest) {
 			free_repls(repls->rest);
@@ -43,7 +43,7 @@ void free_repls(replacements* repls) {
 	}
 }
 
-void replace_all(fuspel *rules, replacements* repls, struct node** node) {
+void replace_all(struct fuspel *rules, struct replacements *repls, struct node **node) {
 	unsigned int org_used_count;
 
 	if (!node || !*node)
@@ -89,9 +89,9 @@ void replace_all(fuspel *rules, replacements* repls, struct node** node) {
 	}
 }
 
-bool match_expr(fuspel* rules, expression* expr, struct node** node,
-		replacements* repls) {
-	replacements* _repls;
+bool match_expr(struct fuspel *rules, struct expression *expr, struct node **node,
+		struct replacements *repls) {
+	struct replacements *_repls;
 	for (_repls = repls; _repls->rest; _repls = _repls->rest);
 
 	remove_redirects(*node);
@@ -126,9 +126,9 @@ bool match_expr(fuspel* rules, expression* expr, struct node** node,
 	}
 }
 
-int match_rule(fuspel* rules, rewrite_rule* rule, struct node** node,
-		replacements* repls) {
-	struct node*** node_args;
+int match_rule(struct fuspel *rules, struct rewrite_rule *rule, struct node **node,
+		struct replacements *repls) {
+	struct node ***node_args;
 	unsigned char i;
 
 	switch ((*node)->kind) {
@@ -140,8 +140,8 @@ int match_rule(fuspel* rules, rewrite_rule* rule, struct node** node,
 			node_args = flatten_app_args(node, true);
 			i = 0;
 			if (!strcmp((*node_args[0])->var1, rule->name)) {
-				struct node** node = node_args[++i];
-				arg_list* args = rule->args;
+				struct node **node = node_args[++i];
+				struct arg_list *args = rule->args;
 				unsigned char args_len = len_arg_list(args);
 
 				while (!empty_args_list(args)) {
@@ -176,15 +176,15 @@ int match_rule(fuspel* rules, rewrite_rule* rule, struct node** node,
 	}
 }
 
-bool is_code_app(struct node* node) {
+bool is_code_app(struct node *node) {
 	for (; node->kind == NODE_APP; node = node->var1);
 	return node->kind == NODE_CODE;
 }
 
-void eval_code_app(fuspel* rules, struct node** node) {
+void eval_code_app(struct fuspel *rules, struct node **node) {
 	struct node *root, ***args;
-	Code_1* f1;
-	Code_2* f2;
+	Code_1 *f1;
+	Code_2 *f2;
 	unsigned char i;
 
 	for (root = *node; root->kind == NODE_APP; root = root->var1);
@@ -209,21 +209,21 @@ void eval_code_app(fuspel* rules, struct node** node) {
 }
 
 #ifdef _FUSPEL_DEBUG
-struct node** root_node;
+struct node **root_node;
 #endif
 
-void eval(fuspel* rules, struct node** node, bool to_rnf) {
-	fuspel* _rules;
+void eval(struct fuspel *rules, struct node **node, bool to_rnf) {
+	struct fuspel *_rules;
 	bool rerun;
 #ifdef _FUSPEL_DEBUG
 	bool print_graph;
 #endif
-	replacements* repls;
+	struct replacements *repls;
 
 	if (!node || !*node)
 		return;
 
-	repls = my_calloc(1, sizeof(replacements));
+	repls = my_calloc(1, sizeof(struct replacements));
 
 #ifdef _FUSPEL_DEBUG
 	if (!root_node) {
@@ -258,9 +258,9 @@ void eval(fuspel* rules, struct node** node, bool to_rnf) {
 					if (add_args >= 0) {
 						unsigned char j;
 						unsigned int org_used_count;
-						replacements* _repls;
-						struct node** _node = node;
-						struct node* new_node = my_calloc(1, sizeof(struct node));
+						struct replacements *_repls;
+						struct node **_node = node;
+						struct node *new_node = my_calloc(1, sizeof(struct node));
 
 						for (j = 0; j < add_args; j++)
 							_node = (struct node**) &(*_node)->var1;
@@ -323,7 +323,7 @@ void eval(fuspel* rules, struct node** node, bool to_rnf) {
 
 			case NODE_CODE:
 				if (*((unsigned char*) (*node)->var2) == 0) {
-					Code_0* code_fun = (Code_0*) (*node)->var1;
+					Code_0 *code_fun = (Code_0*) (*node)->var1;
 					code_fun(node);
 					use_node(*node, 1);
 					rerun = 1;
@@ -346,9 +346,9 @@ void eval(fuspel* rules, struct node** node, bool to_rnf) {
 	my_free(repls);
 }
 
-expression* eval_main(fuspel* rules) {
-	struct node* main_node = my_calloc(1, sizeof(struct node));
-	expression* expr = my_calloc(1, sizeof(expression));
+struct expression *eval_main(struct fuspel *rules) {
+	struct node *main_node = my_calloc(1, sizeof(struct node));
+	struct expression *expr = my_calloc(1, sizeof(struct expression));
 
 	main_node->kind = EXPR_NAME;
 	main_node->used_count = 1;

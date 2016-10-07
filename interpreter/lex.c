@@ -14,7 +14,7 @@ inline bool is_int_char(char input) {
 }
 
 /* The number of bytes that should be read to read an integer */
-unsigned char lex_int_length(char* input) {
+unsigned char lex_int_length(char *input) {
 	unsigned char n = 0;
 	while (is_int_char(*input++)) n++;
 	return n;
@@ -27,14 +27,14 @@ inline bool is_name_char(char input) {
 }
 
 /* The number of bytes that should be read to read a name */
-unsigned char lex_name_length(char* input) {
+unsigned char lex_name_length(char *input) {
 	unsigned char n = 0;
 	while (is_name_char(*input++)) n++;
 	return n;
 }
 
-token_list* lex(token_list* list, char* input) {
-	token_list* first_list;
+struct token_list *lex(struct token_list *list, char *input) {
+	struct token_list *first_list;
 	bool create_new_token;
 
 	while (*input && is_space_char(*input)) input++;
@@ -45,10 +45,10 @@ token_list* lex(token_list* list, char* input) {
 	if (list) {
 		first_list = list;
 		while (list->rest) list = list->rest;
-		list->rest = my_calloc(1, sizeof(token_list));
+		list->rest = my_calloc(1, sizeof(struct token_list));
 		list = list->rest;
 	} else {
-		first_list = list = my_calloc(1, sizeof(token_list));
+		first_list = list = my_calloc(1, sizeof(struct token_list));
 	}
 
 	create_new_token = 1;
@@ -84,7 +84,7 @@ token_list* lex(token_list* list, char* input) {
 					break;
 				}
 				if (is_int_char(*input)) {
-					char* s;
+					char *s;
 					unsigned char len = lex_int_length(input);
 					s = my_calloc(1, len + 1);
 					list->elem.kind = TOKEN_INT;
@@ -111,7 +111,7 @@ token_list* lex(token_list* list, char* input) {
 		do input++; while (*input && is_space_char(*input));
 
 		if (*input && create_new_token) {
-			list->rest = my_calloc(1, sizeof(token_list));
+			list->rest = my_calloc(1, sizeof(struct token_list));
 			list = list->rest;
 		}
 	}

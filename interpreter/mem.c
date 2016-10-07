@@ -2,8 +2,8 @@
 
 #include <stdio.h>
 
-void* my_calloc(size_t num, size_t size) {
-	void* ptr = calloc(num, size);
+void *my_calloc(size_t num, size_t size) {
+	void *ptr = calloc(num, size);
 	if (!ptr) {
 		perror(NULL);
 		exit(EXIT_FAILURE);
@@ -11,7 +11,7 @@ void* my_calloc(size_t num, size_t size) {
 	return ptr;
 }
 
-void* my_realloc(void* ptr, size_t size) {
+void *my_realloc(void *ptr, size_t size) {
 	ptr = realloc(ptr, size);
 	if (!ptr) {
 		perror(NULL);
@@ -20,6 +20,6 @@ void* my_realloc(void* ptr, size_t size) {
 	return ptr;
 }
 
-void my_free(void* ptr) {
+void my_free(void *ptr) {
 	free(ptr);
 }

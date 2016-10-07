@@ -3,6 +3,6 @@
 
 #include "syntax.h"
 
-fuspel* parse(token_list*);
+struct fuspel *parse(struct token_list*);
 
 #endif

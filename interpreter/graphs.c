@@ -4,7 +4,7 @@
 
 #include "mem.h"
 
-void use_node(struct node* node, unsigned int count) {
+void use_node(struct node *node, unsigned int count) {
 	if (!node)
 		return;
 
@@ -27,7 +27,7 @@ void use_node(struct node* node, unsigned int count) {
 	}
 }
 
-void free_node(struct node* node, unsigned int count, bool free_first) {
+void free_node(struct node *node, unsigned int count, bool free_first) {
 	if (!node)
 		return;
 
@@ -63,11 +63,11 @@ void free_node(struct node* node, unsigned int count, bool free_first) {
 	}
 }
 
-struct node*** flatten_app_args(struct node** from, bool remove_redirs) {
+struct node ***flatten_app_args(struct node **from, bool remove_redirs) {
 	struct node ***result;
 	unsigned int i;
 	unsigned char len = 0;
-	struct node* _from = *from;
+	struct node *_from = *from;
 
 	if (remove_redirs)
 		remove_redirects(_from);
@@ -104,7 +104,7 @@ void remove_redirects(struct node *node) {
 	}
 }
 
-void cpy_expression_to_node(struct node* dst, expression* src) {
+void cpy_expression_to_node(struct node *dst, struct expression *src) {
 	if (!dst || !src)
 		return;
 
@@ -143,7 +143,7 @@ void cpy_expression_to_node(struct node* dst, expression* src) {
 	dst->used_count = 1;
 }
 
-void cpy_node_to_expression(expression* dst, struct node* src) {
+void cpy_node_to_expression(struct expression *dst, struct node *src) {
 	if (!dst || !src)
 		return;
 
@@ -172,11 +172,11 @@ void cpy_node_to_expression(expression* dst, struct node* src) {
 		case NODE_APP:
 			dst->var1 = dst->var2 = NULL;
 			if (src->var1) {
-				dst->var1 = my_calloc(1, sizeof(expression));
+				dst->var1 = my_calloc(1, sizeof(struct expression));
 				cpy_node_to_expression(dst->var1, src->var1);
 			}
 			if (src->var2) {
-				dst->var2 = my_calloc(1, sizeof(expression));
+				dst->var2 = my_calloc(1, sizeof(struct expression));
 				cpy_node_to_expression(dst->var2, src->var2);
 			}
 			break;

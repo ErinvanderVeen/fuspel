@@ -14,11 +14,11 @@
 
 #define LINE_LENGTH 139
 
-fuspel* import(fuspel* already_parsed, char* fname) {
-	token_list* tokens = NULL;
-	fuspel* pgm;
-	FILE* f;
-	char* fname_;
+struct fuspel *import(struct fuspel *already_parsed, char *fname) {
+	struct token_list *tokens = NULL;
+	struct fuspel *pgm;
+	FILE *f;
+	char *fname_;
 
 	fname_ = my_calloc(1, strlen(fname) + 6);
 	strcpy(fname_, fname);
@@ -67,7 +67,7 @@ static struct argp_option options[] = {
 	{ 0 }
 };
 struct environment {
-	fuspel* program;
+	struct fuspel *program;
 	bool printProgram;
 };
 
@@ -88,8 +88,8 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
 
 static struct argp argp = { options, parse_opt, args_doc, doc, 0, 0, 0 };
 
-int main(int argc, char* argv[]) {
-	expression* result;
+int main(int argc, char *argv[]) {
+	struct expression *result;
 	struct environment env;
 
 	env.printProgram = false;
