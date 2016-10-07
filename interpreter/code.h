@@ -10,4 +10,8 @@ typedef void (Code_2) (struct node**, struct node*, struct node*);
 
 unsigned char code_find(char* name, void** function);
 
+#ifdef _FUSPEL_DEBUG
+char *code_find_name(void* f);
+#endif
+
 #endif

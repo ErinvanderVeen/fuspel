@@ -104,42 +104,49 @@ void code_ne(struct node** result, struct node* a, struct node* b) {
 		fill_node_bool(result, *((int*) a->var1) != *((int*) b->var1));
 }
 
+struct code_mapping {
+	char* name;
+	void* f;
+	unsigned char arity;
+};
+
+static struct code_mapping code_table[] = {
+	{ "time",  code_time,  0 },
+	{ "trace", code_trace, 2 },
+	{ "add",   code_add,   2 },
+	{ "mul",   code_mul,   2 },
+	{ "sub",   code_sub,   2 },
+	{ "eq",    code_eq,    2 },
+	{ "ge",    code_ge,    2 },
+	{ "gt",    code_gt,    2 },
+	{ "le",    code_le,    2 },
+	{ "lt",    code_lt,    2 },
+	{ "ne",    code_ne,    2 },
+	{ NULL }
+};
+
 unsigned char code_find(char* name, void** function) {
-	if (!strcmp(name, "time")) {
-		*function = (void(*)(void)) code_time;
-		return 0;
-	} else if (!strcmp(name, "trace")) {
-		*function = (void(*)(void)) code_trace;
-		return 2;
-	} else if (!strcmp(name, "add")) {
-		*function = (void(*)(void)) code_add;
-		return 2;
-	} else if (!strcmp(name, "mul")) {
-		*function = (void(*)(void)) code_mul;
-		return 2;
-	} else if (!strcmp(name, "sub")) {
-		*function = (void(*)(void)) code_sub;
-		return 2;
-	} else if (!strcmp(name, "eq")) {
-		*function = (void(*)(void)) code_eq;
-		return 2;
-	} else if (!strcmp(name, "ge")) {
-		*function = (void(*)(void)) code_ge;
-		return 2;
-	} else if (!strcmp(name, "gt")) {
-		*function = (void(*)(void)) code_gt;
-		return 2;
-	} else if (!strcmp(name, "le")) {
-		*function = (void(*)(void)) code_le;
-		return 2;
-	} else if (!strcmp(name, "lt")) {
-		*function = (void(*)(void)) code_lt;
-		return 2;
-	} else if (!strcmp(name, "ne")) {
-		*function = (void(*)(void)) code_ne;
-		return 2;
+	struct code_mapping *entry = code_table;
+	while (entry) {
+		if (!strcmp(name, entry->name)) {
+			*function = entry->f;
+			return entry->arity;
+		}
+		entry++;
 	}
 
 	*function = NULL;
 	return 0;
 }
+
+#ifdef _FUSPEL_DEBUG
+char *code_find_name(void* f) {
+	struct code_mapping *entry = code_table;
+	while (entry) {
+		if (f == entry->f)
+			return entry->name;
+		entry++;
+	}
+	return NULL;
+}
+#endif

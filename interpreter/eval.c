@@ -89,33 +89,6 @@ void replace_all(fuspel *rules, replacements* repls, struct node** node) {
 	}
 }
 
-struct node*** flatten_app_args(struct node** from) {
-	struct node ***result;
-	unsigned int i;
-	unsigned char len = 0;
-	struct node* _from = *from;
-
-	remove_redirects(_from);
-
-	while (_from->kind == NODE_APP) {
-		len++;
-		_from = _from->var1;
-		remove_redirects(_from);
-	}
-	len++;
-
-	result = my_calloc(1, sizeof(struct node**) * (len + 1));
-	i = 1;
-	while ((*from)->kind == NODE_APP) {
-		result[len - i] = (struct node**) &(*from)->var2;
-		from = (struct node**) &(*from)->var1;
-		i++;
-	}
-	result[0] = from;
-	result[len] = NULL;
-	return result;
-}
-
 bool match_expr(fuspel* rules, expression* expr, struct node** node,
 		replacements* repls) {
 	replacements* _repls;
@@ -164,7 +137,7 @@ int match_rule(fuspel* rules, rewrite_rule* rule, struct node** node,
 			break;
 
 		case NODE_APP:
-			node_args = flatten_app_args(node);
+			node_args = flatten_app_args(node, true);
 			i = 0;
 			if (!strcmp((*node_args[0])->var1, rule->name)) {
 				struct node** node = node_args[++i];
@@ -218,7 +191,7 @@ void eval_code_app(fuspel* rules, struct node** node) {
 	if (root->kind != NODE_CODE || !root->var1)
 		return;
 
-	args = flatten_app_args(node);
+	args = flatten_app_args(node, true);
 
 	for (i = 1; i <= *((unsigned char*) root->var2); i++)
 		eval(rules, args[i], 0);
@@ -242,6 +215,9 @@ struct node** root_node;
 void eval(fuspel* rules, struct node** node, bool to_rnf) {
 	fuspel* _rules;
 	bool rerun;
+#ifdef _FUSPEL_DEBUG
+	bool print_graph;
+#endif
 	replacements* repls;
 
 	if (!node || !*node)
@@ -258,6 +234,9 @@ void eval(fuspel* rules, struct node** node, bool to_rnf) {
 
 	do {
 		rerun = 0;
+#ifdef _FUSPEL_DEBUG
+		print_graph = true;
+#endif
 
 		switch ((*node)->kind) {
 			case NODE_INT:
@@ -316,6 +295,10 @@ void eval(fuspel* rules, struct node** node, bool to_rnf) {
 							free_node(_repls->replacement.node, 1, 1);
 
 						rerun = 1;
+#ifdef _FUSPEL_DEBUG
+						if (is_code_app(*node))
+							print_graph = false;
+#endif
 						break;
 					}
 
@@ -354,7 +337,7 @@ void eval(fuspel* rules, struct node** node, bool to_rnf) {
 		}
 
 #ifdef _FUSPEL_DEBUG
-		if (rerun)
+		if (rerun && print_graph)
 			print_node_to_file(*root_node, NULL, NULL);
 #endif
 	} while (rerun);

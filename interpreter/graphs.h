@@ -25,6 +25,8 @@ struct node {
 void use_node(struct node* node, unsigned int count);
 void free_node(struct node* node, unsigned int count, bool free_first);
 
+struct node*** flatten_app_args(struct node** from, bool remove_redirs);
+
 void remove_redirects(struct node *node);
 
 void cpy_expression_to_node(struct node* dst, expression* src);

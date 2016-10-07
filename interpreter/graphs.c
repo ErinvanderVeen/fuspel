@@ -63,6 +63,35 @@ void free_node(struct node* node, unsigned int count, bool free_first) {
 	}
 }
 
+struct node*** flatten_app_args(struct node** from, bool remove_redirs) {
+	struct node ***result;
+	unsigned int i;
+	unsigned char len = 0;
+	struct node* _from = *from;
+
+	if (remove_redirs)
+		remove_redirects(_from);
+
+	while (_from->kind == NODE_APP) {
+		len++;
+		_from = _from->var1;
+		if (remove_redirs)
+			remove_redirects(_from);
+	}
+	len++;
+
+	result = my_calloc(1, sizeof(struct node**) * (len + 1));
+	i = 1;
+	while ((*from)->kind == NODE_APP) {
+		result[len - i] = (struct node**) &(*from)->var2;
+		from = (struct node**) &(*from)->var1;
+		i++;
+	}
+	result[0] = from;
+	result[len] = NULL;
+	return result;
+}
+
 void remove_redirects(struct node *node) {
 	while (node->kind == NODE_REDIRECT) {
 		struct node *child = (struct node*) node->var1;
