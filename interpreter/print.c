@@ -10,7 +10,7 @@
 #include "mem.h"
 
 void print_token(struct token *tk) {
-	char c = NULL;
+	char c = 0x00;
 	switch (tk->kind) {
 		case TOKEN_SEMICOLON: c = ';'; break;
 		case TOKEN_COLON:     c = ':'; break;
