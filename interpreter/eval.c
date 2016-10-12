@@ -210,6 +210,7 @@ void eval_code_app(struct fuspel *rules, struct node **node) {
 
 #ifdef _FUSPEL_DEBUG
 struct node **root_node;
+bool debug_graphs;
 #endif
 
 void eval(struct fuspel *rules, struct node **node, bool to_rnf) {
@@ -226,7 +227,7 @@ void eval(struct fuspel *rules, struct node **node, bool to_rnf) {
 	repls = my_calloc(1, sizeof(struct replacements));
 
 #ifdef _FUSPEL_DEBUG
-	if (!root_node) {
+	if (!root_node && debug_graphs) {
 		root_node = node;
 		print_node_to_file(*root_node, NULL, NULL);
 	}
@@ -235,7 +236,7 @@ void eval(struct fuspel *rules, struct node **node, bool to_rnf) {
 	do {
 		rerun = 0;
 #ifdef _FUSPEL_DEBUG
-		print_graph = true;
+		print_graph = debug_graphs;
 #endif
 
 		switch ((*node)->kind) {
@@ -346,9 +347,17 @@ void eval(struct fuspel *rules, struct node **node, bool to_rnf) {
 	my_free(repls);
 }
 
-struct expression *eval_main(struct fuspel *rules) {
+struct expression *eval_main(struct fuspel *rules
+#ifdef _FUSPEL_DEBUG
+		, bool debug_graphs_enabled
+#endif
+		) {
 	struct node *main_node = my_calloc(1, sizeof(struct node));
 	struct expression *expr = my_calloc(1, sizeof(struct expression));
+
+#ifdef _FUSPEL_DEBUG
+	debug_graphs = debug_graphs_enabled;
+#endif
 
 	main_node->kind = EXPR_NAME;
 	main_node->used_count = 1;
