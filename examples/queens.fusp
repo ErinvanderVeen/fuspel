@@ -3,7 +3,7 @@ sub a b = code sub a b;
 gt a b = code gt a b;
 eq a b = code eq a b;
 
-size = 6;
+size = 4;
 
 if 0 _ b = b;
 if 1 a _ = a;

@@ -6,4 +6,4 @@ is_palindrome [] = 1;
 is_palindrome [_:[]] = 1;
 is_palindrome [x:xs] = if (eq x (last xs)) (is_palindrome (init xs)) 0;
 
-main = is_palindrome [0:[42:[37:[42:[0:[]]]]]];
+main = is_palindrome [0,42,37,42,0];
