@@ -10,10 +10,10 @@ void free_token(struct token *tk) {
 }
 
 void free_token_list(struct token_list *list) {
-	free_token(&list->elem);
-	if (list->rest)
-		free_token_list(list->rest);
-	my_free(list->rest);
+	unsigned int i;
+	for (i = 0; i < list->index; i++)
+		free_token(&list->elems[i]);
+	my_free(list);
 }
 
 bool empty_args_list(struct arg_list *list) {

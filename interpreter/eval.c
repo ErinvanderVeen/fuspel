@@ -216,9 +216,6 @@ bool debug_graphs;
 void eval(struct fuspel *rules, struct node **node, bool to_rnf) {
 	struct fuspel *_rules;
 	bool rerun;
-#ifdef _FUSPEL_DEBUG
-	bool print_graph;
-#endif
 	struct replacements *repls;
 
 	if (!node || !*node)
@@ -234,10 +231,10 @@ void eval(struct fuspel *rules, struct node **node, bool to_rnf) {
 #endif
 
 	do {
-		rerun = 0;
 #ifdef _FUSPEL_DEBUG
-		print_graph = debug_graphs;
+		bool print_graph = debug_graphs;
 #endif
+		rerun = false;
 
 		switch ((*node)->kind) {
 			case NODE_INT:
@@ -247,7 +244,7 @@ void eval(struct fuspel *rules, struct node **node, bool to_rnf) {
 			case NODE_APP:
 				if (is_code_app(*node)) {
 					eval_code_app(rules, node);
-					rerun = 1;
+					rerun = true;
 					break;
 				}
 
@@ -295,7 +292,7 @@ void eval(struct fuspel *rules, struct node **node, bool to_rnf) {
 								_repls = _repls->rest)
 							free_node(_repls->replacement.node, 1, 1);
 
-						rerun = 1;
+						rerun = true;
 #ifdef _FUSPEL_DEBUG
 						if (is_code_app(*node))
 							print_graph = false;
@@ -327,13 +324,13 @@ void eval(struct fuspel *rules, struct node **node, bool to_rnf) {
 					Code_0 *code_fun = (Code_0*) (*node)->var1;
 					code_fun(node);
 					use_node(*node, 1);
-					rerun = 1;
+					rerun = true;
 				}
 				break;
 
 			case NODE_REDIRECT:
 				remove_redirects(*node);
-				rerun = 1;
+				rerun = true;
 				break;
 		}
 
@@ -356,6 +353,7 @@ struct expression *eval_main(struct fuspel *rules
 	struct expression *expr = my_calloc(1, sizeof(struct expression));
 
 #ifdef _FUSPEL_DEBUG
+	root_node = NULL;
 	debug_graphs = debug_graphs_enabled;
 #endif
 

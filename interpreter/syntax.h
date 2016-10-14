@@ -26,8 +26,9 @@ struct token {
 };
 
 struct token_list {
-	struct token elem;
-	struct token_list *rest;
+	unsigned int length;
+	unsigned int index;
+	struct token elems[];
 };
 
 void free_token(struct token*);

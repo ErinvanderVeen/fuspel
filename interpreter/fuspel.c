@@ -50,7 +50,6 @@ struct fuspel *import(struct fuspel *already_parsed, char *fname) {
 
 	pgm = parse(tokens);
 	free_token_list(tokens);
-	my_free(tokens);
 
 	concat_fuspel(pgm, already_parsed);
 
@@ -105,6 +104,10 @@ int main(int argc, char *argv[]) {
 
 	env.printProgram = false;
 	env.program = NULL;
+#ifdef _FUSPEL_DEBUG
+	env.debugGraphs = false;
+#endif
+
 	argp_parse(&argp, argc, argv, 0, 0, &env);
 	
 	if (!env.program) {

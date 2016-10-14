@@ -20,8 +20,8 @@ void print_token(struct token *tk) {
 		case TOKEN_CLOSE_SQ:  c = ']'; break;
 		case TOKEN_EQUALS:    c = '='; break;
 		case TOKEN_COMMA:     c = ','; break;
-		case TOKEN_CODE:      printf("code "); return;
-		case TOKEN_IMPORT:    printf("import "); return;
+		case TOKEN_CODE:      printf("code"); return;
+		case TOKEN_IMPORT:    printf("import"); return;
 		case TOKEN_NAME:
 			printf("%s", (char*) tk->var);
 			return;
@@ -34,10 +34,10 @@ void print_token(struct token *tk) {
 }
 
 void print_token_list(struct token_list *list) {
-	print_token(&list->elem);
-	if (list->rest) {
-		printf(list->elem.kind == TOKEN_SEMICOLON ? "\n" : " ");
-		print_token_list(list->rest);
+	unsigned int i;
+	for (i = 0; i < list->index; i++) {
+		print_token(&list->elems[i]);
+		printf(list->elems[i].kind == TOKEN_SEMICOLON ? "\n" : " ");
 	}
 }
 
