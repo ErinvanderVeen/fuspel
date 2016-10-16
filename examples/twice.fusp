@@ -1,3 +1,4 @@
-mul a b = code mul a b;
+// Set ulimit -s 16384 before running this.
+add a b = code add a b;
 twice f x = f (f x);
-main = twice twice twice (mul 2) 1;
+main = twice twice twice twice (add 1) 0;

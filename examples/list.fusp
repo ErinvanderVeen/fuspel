@@ -29,3 +29,7 @@ repeat n x = [x:repeat (sub 1 n) x];
 
 map f []     = [];
 map f [x:xs] = [f x:map f xs];
+
+take _ []     = [];
+take 0 _      = [];
+take n [x:xs] = [x:take (sub 1 n) xs];

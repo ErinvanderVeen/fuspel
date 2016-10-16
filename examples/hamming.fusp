@@ -1,0 +1,12 @@
+import list;
+import int;
+import bool;
+
+// Taken from the Clean examples: the Hamming function.
+// The first 100 numbers with only 2, 3 and 5 as prime factors.
+
+ham = [1:merge (merge (map (mul 2) ham) (map (mul 3) ham)) (map (mul 5) ham)];
+
+merge [a:b] [c:d] = if (lt a c) [a:merge b [c:d]] (if (eq a c) (merge [a:b] d) [c:merge [a:b] d]);
+
+main = take 100 ham;
