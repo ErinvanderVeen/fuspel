@@ -51,6 +51,11 @@ struct fuspel *import(struct fuspel *already_parsed, char *fname) {
 	pgm = parse(tokens);
 	free_token_list(tokens);
 
+	if (!pgm) {
+		fprintf(stderr, "Couldn't parse module %s.\n", fname);
+		exit(EXIT_FAILURE);
+	}
+
 	concat_fuspel(pgm, already_parsed);
 
 	return pgm;
@@ -89,7 +94,11 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
 #endif // _FUSPEL_DEBUG
 		case ARGP_KEY_ARG:
 			env->program = import(env->program, arg);
-			return 0;
+			break;
+		case ARGP_KEY_END:
+			if (state->arg_num < 1)
+				argp_usage(state);
+			break;
 		default:
 			return ARGP_ERR_UNKNOWN;
 	}
@@ -109,11 +118,6 @@ int main(int argc, char *argv[]) {
 #endif
 
 	argp_parse(&argp, argc, argv, 0, 0, &env);
-	
-	if (!env.program) {
-		fprintf(stderr, "Couldn't parse program.\n");
-		exit(EXIT_FAILURE);
-	}
 
 	if (env.printProgram) {
 		printf("\n");
