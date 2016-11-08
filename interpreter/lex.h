@@ -1,5 +1,5 @@
-#ifndef _H_LEX
-#define _H_LEX
+#ifndef _H_FUSPEL_LEX
+#define _H_FUSPEL_LEX
 
 #include "syntax.h"
 

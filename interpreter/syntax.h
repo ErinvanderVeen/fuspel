@@ -1,5 +1,5 @@
-#ifndef _H_SYNTAX
-#define _H_SYNTAX
+#ifndef _H_FUSPEL_SYNTAX
+#define _H_FUSPEL_SYNTAX
 
 #include <stdbool.h>
 

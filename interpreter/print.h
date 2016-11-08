@@ -1,5 +1,5 @@
-#ifndef _H_PRINT
-#define _H_PRINT
+#ifndef _H_FUSPEL_PRINT
+#define _H_FUSPEL_PRINT
 
 #include "syntax.h"
 #include "graphs.h"

@@ -1,5 +1,5 @@
-#ifndef _H_MEM
-#define _H_MEM
+#ifndef _H_FUSPEL_MEM
+#define _H_FUSPEL_MEM
 
 #include <stdlib.h>
 

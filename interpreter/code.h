@@ -1,5 +1,5 @@
-#ifndef _H_CODE
-#define _H_CODE
+#ifndef _H_FUSPEL_CODE
+#define _H_FUSPEL_CODE
 
 #include "syntax.h"
 #include "graphs.h"

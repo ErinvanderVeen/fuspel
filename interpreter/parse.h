@@ -1,5 +1,5 @@
-#ifndef _H_PARSE
-#define _H_PARSE
+#ifndef _H_FUSPEL_PARSE
+#define _H_FUSPEL_PARSE
 
 #include "syntax.h"
 

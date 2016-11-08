@@ -1,5 +1,5 @@
-#ifndef _H_EVAL
-#define _H_EVAL
+#ifndef _H_FUSPEL_EVAL
+#define _H_FUSPEL_EVAL
 
 #include "syntax.h"
 

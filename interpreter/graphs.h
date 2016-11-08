@@ -1,5 +1,5 @@
-#ifndef _H_GRAPHS
-#define _H_GRAPHS
+#ifndef _H_FUSPEL_GRAPHS
+#define _H_FUSPEL_GRAPHS
 
 #include <stdbool.h>
 #include "syntax.h"
