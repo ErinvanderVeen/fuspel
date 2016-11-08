@@ -139,7 +139,7 @@ unsigned char code_find(char *name, void **function) {
 	return 0;
 }
 
-#ifdef _FUSPEL_DEBUG
+#ifdef FUSPEL_DEBUG
 char *code_find_name(void *f) {
 	struct code_mapping *entry = code_table;
 	while (entry) {

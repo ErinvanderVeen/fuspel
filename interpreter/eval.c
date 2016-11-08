@@ -7,7 +7,7 @@
 #include "graphs.h"
 #include "mem.h"
 
-#ifdef _FUSPEL_DEBUG
+#ifdef FUSPEL_DEBUG
 #include "print.h"
 #endif
 
@@ -208,7 +208,7 @@ void eval_code_app(struct fuspel *rules, struct node **node) {
 	my_free(args);
 }
 
-#ifdef _FUSPEL_DEBUG
+#ifdef FUSPEL_DEBUG
 struct node **root_node;
 bool debug_graphs;
 #endif
@@ -223,7 +223,7 @@ void eval(struct fuspel *rules, struct node **node, bool to_rnf) {
 
 	repls = my_calloc(1, sizeof(struct replacements));
 
-#ifdef _FUSPEL_DEBUG
+#ifdef FUSPEL_DEBUG
 	if (!root_node && debug_graphs) {
 		root_node = node;
 		print_node_to_file(*root_node, NULL, NULL);
@@ -231,7 +231,7 @@ void eval(struct fuspel *rules, struct node **node, bool to_rnf) {
 #endif
 
 	do {
-#ifdef _FUSPEL_DEBUG
+#ifdef FUSPEL_DEBUG
 		bool print_graph = debug_graphs;
 #endif
 		rerun = false;
@@ -293,7 +293,7 @@ void eval(struct fuspel *rules, struct node **node, bool to_rnf) {
 							free_node(_repls->replacement.node, 1, 1);
 
 						rerun = true;
-#ifdef _FUSPEL_DEBUG
+#ifdef FUSPEL_DEBUG
 						if (is_code_app(*node))
 							print_graph = false;
 #endif
@@ -334,7 +334,7 @@ void eval(struct fuspel *rules, struct node **node, bool to_rnf) {
 				break;
 		}
 
-#ifdef _FUSPEL_DEBUG
+#ifdef FUSPEL_DEBUG
 		if (rerun && print_graph)
 			print_node_to_file(*root_node, NULL, NULL);
 #endif
@@ -345,14 +345,14 @@ void eval(struct fuspel *rules, struct node **node, bool to_rnf) {
 }
 
 struct expression *eval_main(struct fuspel *rules
-#ifdef _FUSPEL_DEBUG
+#ifdef FUSPEL_DEBUG
 		, bool debug_graphs_enabled
 #endif
 		) {
 	struct node *main_node = my_calloc(1, sizeof(struct node));
 	struct expression *expr = my_calloc(1, sizeof(struct expression));
 
-#ifdef _FUSPEL_DEBUG
+#ifdef FUSPEL_DEBUG
 	root_node = NULL;
 	debug_graphs = debug_graphs_enabled;
 #endif

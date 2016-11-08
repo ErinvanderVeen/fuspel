@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifdef _FUSPEL_CLI
+#ifdef FUSPEL_CLI
 #include <argp.h>
 #include <stdbool.h>
 #endif
@@ -61,24 +61,24 @@ struct fuspel *import(struct fuspel *already_parsed, char *fname) {
 	return pgm;
 }
 
-#ifdef _FUSPEL_CLI
+#ifdef FUSPEL_CLI
 const char *argp_prog_version = "fuspel";
 const char *argp_prog_bugs = "<info@camilstaps.nl>";
 static char doc[] = "Interpret a fuspel program";
 static char args_doc[] = "MODULE [MODULE [MODULE [..]]]";
 static struct argp_option options[] = {
 	{ "print-program", 'P', 0, 0, "Print the parsed program before execution" },
-#ifdef _FUSPEL_DEBUG
+#ifdef FUSPEL_DEBUG
 	{ "debug-graphs", 'g', 0, 0, "Make a dot graph after every rewriting step" },
-#endif // _FUSPEL_DEBUG
+#endif // FUSPEL_DEBUG
 	{ 0 }
 };
 struct environment {
 	struct fuspel *program;
 	bool printProgram;
-#ifdef _FUSPEL_DEBUG
+#ifdef FUSPEL_DEBUG
 	bool debugGraphs;
-#endif // _FUSPEL_DEBUG
+#endif // FUSPEL_DEBUG
 };
 
 static error_t parse_opt(int key, char *arg, struct argp_state *state) {
@@ -87,11 +87,11 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
 		case 'P':
 			env->printProgram = true;
 			break;
-#ifdef _FUSPEL_DEBUG
+#ifdef FUSPEL_DEBUG
 		case 'g':
 			env->debugGraphs = true;
 			break;
-#endif // _FUSPEL_DEBUG
+#endif // FUSPEL_DEBUG
 		case ARGP_KEY_ARG:
 			env->program = import(env->program, arg);
 			break;
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
 
 	env.printProgram = false;
 	env.program = NULL;
-#ifdef _FUSPEL_DEBUG
+#ifdef FUSPEL_DEBUG
 	env.debugGraphs = false;
 #endif
 
@@ -125,7 +125,7 @@ int main(int argc, char *argv[]) {
 		printf("\n\n");
 	}
 
-#ifdef _FUSPEL_DEBUG
+#ifdef FUSPEL_DEBUG
 	result = eval_main(env.program, env.debugGraphs);
 #else
 	result = eval_main(env.program);
@@ -143,4 +143,4 @@ int main(int argc, char *argv[]) {
 
 	return 0;
 }
-#endif // _FUSPEL_CLI
+#endif // FUSPEL_CLI

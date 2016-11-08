@@ -1,6 +1,6 @@
 #include "print.h"
 
-#ifdef _FUSPEL_DEBUG
+#ifdef FUSPEL_DEBUG
 #include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
@@ -135,7 +135,7 @@ void print_node(struct node *node) {
 	my_free(e);
 }
 
-#ifdef _FUSPEL_DEBUG
+#ifdef FUSPEL_DEBUG
 static unsigned int file_count = 0;
 
 void free_visited_nodes(struct visited_nodes *list) {

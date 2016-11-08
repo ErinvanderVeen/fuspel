@@ -4,7 +4,7 @@
 #include "syntax.h"
 
 struct expression *eval_main(struct fuspel*
-#ifdef _FUSPEL_DEBUG
+#ifdef FUSPEL_DEBUG
 		, bool debug_graphs
 #endif
 		);
