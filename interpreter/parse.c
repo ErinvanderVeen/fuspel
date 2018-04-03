@@ -148,6 +148,16 @@ bool parse_simple_expression(struct expression *expr, struct parsing_list *list)
 					list->i++;
 					return true;
 				}
+			} else if (list->tokens->elems[list->i].kind == TOKEN_COLON) {
+				list->i++;
+				if (!parse_simple_expression(expr->var2, list) ||
+						list->tokens->elems[list->i].kind != TOKEN_CLOSE_SQ) {
+					free_expression(expr);
+					return false;
+				} else {
+					list->i++;
+					return true;
+				}
 			}
 
 		default:
