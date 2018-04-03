@@ -5,6 +5,8 @@
 #include "mem.h"
 
 void free_token(struct token *tk) {
+	if (tk->kind == TOKEN_INT)
+		return;
 	if (tk->var)
 		my_free(tk->var);
 }
@@ -34,8 +36,7 @@ void cpy_expression(struct expression *dst, struct expression *src) {
 	dst->kind = src->kind;
 	switch (dst->kind) {
 		case EXPR_INT:
-			dst->var1 = my_calloc(1, sizeof(int));
-			*((int*) dst->var1) = *((int*) src->var1);
+			dst->var1 = src->var1;
 			break;
 		case EXPR_NAME:
 			dst->var1 = my_calloc(1, strlen((char*) src->var1) + 1);
@@ -64,7 +65,7 @@ bool eq_expression(struct expression *a, struct expression *b) {
 		return 0;
 
 	switch (a->kind) {
-		case EXPR_INT:  return *((int*) a->var1) == *((int*) b->var1);
+		case EXPR_INT:  return a->var1 == b->var1;
 		case EXPR_NAME: return !strcmp(a->var1, b->var1);
 		case EXPR_CODE: return a->var1 == b->var1;
 		case EXPR_TUPLE:
@@ -118,6 +119,8 @@ void free_expression(struct expression *expr) {
 
 	switch (expr->kind) {
 		case EXPR_INT:
+			break;
+
 		case EXPR_NAME:
 			my_free(expr->var1);
 			break;

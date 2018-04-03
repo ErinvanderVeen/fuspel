@@ -103,7 +103,7 @@ bool match_expr(struct fuspel *rules, struct expression *expr, struct node **nod
 
 	switch (expr->kind) {
 		case EXPR_INT:
-			return *((int*) (*node)->var1) == *((int*) expr->var1);
+			return (*node)->var1 == expr->var1;
 
 		case EXPR_NAME:
 			push_repl(_repls, (char*) expr->var1, *node);
@@ -349,7 +349,7 @@ void print_eval(FILE *out, struct fuspel *rules, struct node **node) {
 
 	switch ((*node)->kind) {
 		case NODE_INT:
-			fprintf(out, "%d", *(int*)(*node)->var1);
+			fprintf(out, "%ld", (INT)(*node)->var1);
 			break;
 		case NODE_NAME:
 			fprintf(out, "%s", (char*)(*node)->var1);
@@ -373,6 +373,7 @@ void print_eval(FILE *out, struct fuspel *rules, struct node **node) {
 						eval(rules, &tl, true);
 						print_eval(out, rules, (struct node**) &tl->var1);
 						tl = (struct node*) tl->var2;
+						eval(rules, &tl, true);
 					}
 				}
 				fprintf(out, "]");

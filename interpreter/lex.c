@@ -91,10 +91,9 @@ struct token_list *lex(struct token_list *list, char *input) {
 					char *s;
 					unsigned char len = lex_int_length(input);
 					s = my_calloc(1, len + 1);
-					list->elems[list->index].kind = TOKEN_INT;
-					list->elems[list->index].var = my_calloc(1, sizeof(int));
 					strncpy(s, input, len);
-					*((int*) list->elems[list->index].var) = atoi(s);
+					list->elems[list->index].kind = TOKEN_INT;
+					list->elems[list->index].var = (void*)((INT)atoi(s));
 					my_free(s);
 					input += len - 1;
 				} else if (is_name_char(*input)) {

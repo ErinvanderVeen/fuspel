@@ -7,12 +7,11 @@
 #include "mem.h"
 #include "print.h"
 
-void fill_node_int(struct node **node, int i) {
+void fill_node_int(struct node **node, INT i) {
 	unsigned int used_count = (*node)->used_count;
 	free_node(*node, used_count, 0);
 	(*node)->kind = NODE_INT;
-	(*node)->var1 = my_calloc(1, sizeof(int));
-	*((int*) (*node)->var1) = i;
+	(*node)->var1 = (void*) i;
 	use_node(*node, used_count);
 }
 
@@ -45,63 +44,63 @@ void code_add(struct node **result, struct node *a, struct node *b) {
 	if (a->kind != NODE_INT || b->kind != NODE_INT)
 		fill_node_name(result, "add on non-ints");
 	else
-		fill_node_int(result, *((int*) b->var1) + *((int*) a->var1));
+		fill_node_int(result, (INT) b->var1 + (INT) a->var1);
 }
 
 void code_mul(struct node **result, struct node *a, struct node *b) {
 	if (a->kind != NODE_INT || b->kind != NODE_INT)
 		fill_node_name(result, "mul on non-ints");
 	else
-		fill_node_int(result, *((int*) a->var1) * *((int*) b->var1));
+		fill_node_int(result, (INT) a->var1 * (INT) b->var1);
 }
 
 void code_sub(struct node **result, struct node *a, struct node *b) {
 	if (a->kind != NODE_INT || b->kind != NODE_INT)
 		fill_node_name(result, "sub on non-ints");
 	else
-		fill_node_int(result, *((int*) b->var1) - *((int*) a->var1));
+		fill_node_int(result, (INT) b->var1 - (INT) a->var1);
 }
 
 void code_eq(struct node **result, struct node *a, struct node *b) {
 	if (a->kind != NODE_INT || b->kind != NODE_INT)
 		fill_node_name(result, "eq on non-ints");
 	else
-		fill_node_bool(result, *((int*) a->var1) == *((int*) b->var1));
+		fill_node_bool(result, (INT) a->var1 == (INT) b->var1);
 }
 
 void code_gt(struct node **result, struct node *a, struct node *b) {
 	if (a->kind != NODE_INT || b->kind != NODE_INT)
 		fill_node_name(result, "gt on non-ints");
 	else
-		fill_node_bool(result, *((int*) a->var1) > *((int*) b->var1));
+		fill_node_bool(result, (INT) a->var1 > (INT) b->var1);
 }
 
 void code_ge(struct node **result, struct node *a, struct node *b) {
 	if (a->kind != NODE_INT || b->kind != NODE_INT)
 		fill_node_name(result, "ge on non-ints");
 	else
-		fill_node_bool(result, *((int*) a->var1) >= *((int*) b->var1));
+		fill_node_bool(result, (INT) a->var1 >= (INT) b->var1);
 }
 
 void code_lt(struct node **result, struct node *a, struct node *b) {
 	if (a->kind != NODE_INT || b->kind != NODE_INT)
 		fill_node_name(result, "lt on non-ints");
 	else
-		fill_node_bool(result, *((int*) a->var1) < *((int*) b->var1));
+		fill_node_bool(result, (INT) a->var1 < (INT) b->var1);
 }
 
 void code_le(struct node **result, struct node *a, struct node *b) {
 	if (a->kind != NODE_INT || b->kind != NODE_INT)
 		fill_node_name(result, "le on non-ints");
 	else
-		fill_node_bool(result, *((int*) a->var1) <= *((int*) b->var1));
+		fill_node_bool(result, (INT) a->var1 <= (INT) b->var1);
 }
 
 void code_ne(struct node **result, struct node *a, struct node *b) {
 	if (a->kind != NODE_INT || b->kind != NODE_INT)
 		fill_node_name(result, "ne on non-ints");
 	else
-		fill_node_bool(result, *((int*) a->var1) != *((int*) b->var1));
+		fill_node_bool(result, (INT) a->var1 != (INT) b->var1);
 }
 
 struct code_mapping {

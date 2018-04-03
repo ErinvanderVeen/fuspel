@@ -50,7 +50,7 @@ void free_node(struct node *node, unsigned int count, bool free_first) {
 	}
 
 	if (node->used_count == 0) {
-		if (node->kind == NODE_INT || node->kind == NODE_NAME)
+		if (node->kind == NODE_NAME)
 			my_free(node->var1);
 
 		if (node->kind == NODE_CODE)
@@ -111,8 +111,7 @@ void cpy_expression_to_node(struct node *dst, struct expression *src) {
 	dst->kind = src->kind;
 	switch (src->kind) {
 		case EXPR_INT:
-			dst->var1 = my_calloc(1, sizeof(int));
-			*((int*) dst->var1) = *((int*) src->var1);
+			dst->var1 = src->var1;
 			break;
 
 		case EXPR_NAME:
@@ -152,8 +151,7 @@ void cpy_node_to_expression(struct expression *dst, struct node *src) {
 	dst->kind = src->kind;
 	switch (src->kind) {
 		case NODE_INT:
-			dst->var1 = my_calloc(1, sizeof(int));
-			*((int*) dst->var1) = *((int*) src->var1);
+			dst->var1 = src->var1;
 			break;
 
 		case NODE_NAME:

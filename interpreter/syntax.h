@@ -3,6 +3,8 @@
 
 #include <stdbool.h>
 
+typedef long int INT;
+
 /* TOKENS */
 
 enum token_kind {

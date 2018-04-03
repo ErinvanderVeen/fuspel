@@ -32,8 +32,7 @@ bool parse_simple_expression(struct expression *expr, struct parsing_list *list)
 	switch (list->tokens->elems[list->i].kind) {
 		case TOKEN_INT:
 			expr->kind = EXPR_INT;
-			expr->var1 = my_calloc(1, sizeof(int));
-			*((int*) expr->var1) = *((int*) list->tokens->elems[list->i].var);
+			expr->var1 = list->tokens->elems[list->i].var;
 			list->i++;
 			return true;
 

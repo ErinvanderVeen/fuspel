@@ -64,7 +64,7 @@ void print_expression(struct expression *expr) {
 
 	switch (expr->kind) {
 		case EXPR_INT:
-			printf("%d", *((int*) expr->var1));
+			printf("%ld", (INT) expr->var1);
 			break;
 		case EXPR_NAME:
 			printf("%s", (char*) expr->var1);
