@@ -104,23 +104,51 @@ bool parse_simple_expression(struct expression *expr, struct parsing_list *list)
 			expr->var2 = my_calloc(1, sizeof(struct expression));
 
 			if (!parse_simple_expression(expr->var1, list) ||
-					list->tokens->elems[list->i].kind != TOKEN_COLON) {
+					(list->tokens->elems[list->i].kind != TOKEN_COLON &&
+					 list->tokens->elems[list->i].kind != TOKEN_COMMA &&
+					 list->tokens->elems[list->i].kind != TOKEN_CLOSE_SQ)) {
 				free_expression(expr->var1);
 				return false;
+			} else if (list->tokens->elems[list->i].kind == TOKEN_CLOSE_SQ) {
+				((struct expression *) expr->var2)->kind = EXPR_LIST;
+				((struct expression *) expr->var2)->var1 = NULL;
+				((struct expression *) expr->var2)->var2 = NULL;
+				list->i++;
+				return true;
+			} else if (list->tokens->elems[list->i].kind == TOKEN_COMMA) {
+				struct expression *_expr = expr;
+				bool loop = true;
+				while (loop && list->tokens->elems[list->i].kind == TOKEN_COMMA) {
+					_expr = _expr->var2;
+					_expr->kind = EXPR_LIST;
+					_expr->var1 = my_calloc(1, sizeof(struct expression));
+					_expr->var2 = my_calloc(1, sizeof(struct expression));
+					list->i++;
+					loop = parse_simple_expression(_expr->var1, list);
+				}
+				if (list->i >= list->tokens->length ||
+						(list->tokens->elems[list->i].kind != TOKEN_CLOSE_SQ &&
+						 list->tokens->elems[list->i].kind != TOKEN_COLON)) {
+					free_expression(expr);
+					return false;
+				} else if (list->tokens->elems[list->i].kind == TOKEN_COLON) {
+					list->i++;
+					if (!parse_simple_expression(((struct expression*) expr->var2)->var2, list) ||
+							list->tokens->elems[list->i].kind != TOKEN_CLOSE_SQ) {
+						free_expression(expr);
+						return false;
+					} else {
+						list->i++;
+						return true;
+					}
+				} else if (list->tokens->elems[list->i].kind == TOKEN_CLOSE_SQ) {
+					((struct expression*) _expr->var2)->kind = EXPR_LIST;
+					((struct expression*) _expr->var2)->var1 = NULL;
+					((struct expression*) _expr->var2)->var2 = NULL;
+					list->i++;
+					return true;
+				}
 			}
-			
-			list->i++;
-			if (!parse_simple_expression(expr->var2, list) ||
-					list->tokens->elems[list->i].kind != TOKEN_CLOSE_SQ) {
-				free_expression(expr->var1);
-				my_free(expr->var1);
-				free_expression(expr->var2);
-				my_free(expr->var2);
-				return false;
-			}
-
-			list->i++;
-			return true;
 
 		default:
 			return false;
