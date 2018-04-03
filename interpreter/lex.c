@@ -5,11 +5,11 @@
 
 #include "mem.h"
 
-inline bool is_space_char(char input) {
+static inline bool is_space_char(char input) {
 	return input == '\t' || input == ' ' || input == '\n' || input == '\r';
 }
 
-inline bool is_int_char(char input) {
+static inline bool is_int_char(char input) {
 	return '0' <= input && input <= '9';
 }
 
@@ -20,7 +20,7 @@ unsigned char lex_int_length(char *input) {
 	return n;
 }
 
-inline bool is_name_char(char input) {
+static inline bool is_name_char(char input) {
 	return (('A' <= input && input <= 'Z') ||
 			('a' <= input && input <= 'z') ||
 			input == '_');

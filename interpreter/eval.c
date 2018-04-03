@@ -114,8 +114,8 @@ bool match_expr(struct fuspel *rules, struct expression *expr, struct node **nod
 			if ((int) (*node)->kind != (int) expr->kind)
 				return 0;
 
-			if (!expr->var1)
-				return (*node)->var1 == NULL;
+			if (!expr->var1 || !(*node)->var1)
+				return expr->var1 == (*node)->var1;
 
 			return
 				match_expr(rules, expr->var1, (struct node**) &(*node)->var1, _repls) &&
