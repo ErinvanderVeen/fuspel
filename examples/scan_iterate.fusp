@@ -1,0 +1,5 @@
+import func;
+import int;
+import list;
+
+main = [take 5 (iterate (flip pow 2) 2), scan mul 1 [3,4,5], scan add 0 [3,4,5]];

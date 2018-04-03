@@ -1,0 +1,10 @@
+import bool;
+import int;
+
+fix f = fixb f (fixb f);
+fixb f x = f (x x);
+
+main = fix myadd 5 10;
+
+// Fixpoint peano integer addition
+myadd a m n = if (eq n 0) m (add 1 (a m (sub 1 n)));
