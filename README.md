@@ -2,7 +2,7 @@
 
 Functional Simple Programming Language.
 
-Copyright &copy; 2016 Camil Staps.
+Copyright &copy; 2016&ndash;2018 Camil Staps.
 
 ## Documentation
 
