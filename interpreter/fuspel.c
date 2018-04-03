@@ -126,14 +126,11 @@ int main(int argc, char *argv[]) {
 	}
 
 #ifdef FUSPEL_DEBUG
-	result = eval_main(env.program, env.debugGraphs);
+	result = eval_main(stdout, env.program, env.debugGraphs);
 #else
-	result = eval_main(env.program);
+	result = eval_main(stdout, env.program);
 #endif
 	if (result) {
-		print_expression(result);
-		printf("\n");
-
 		free_expression(result);
 		my_free(result);
 	}

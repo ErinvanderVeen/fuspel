@@ -344,7 +344,58 @@ void eval(struct fuspel *rules, struct node **node, bool to_rnf) {
 	my_free(repls);
 }
 
-struct expression *eval_main(struct fuspel *rules
+void print_eval(FILE *out, struct fuspel *rules, struct node **node) {
+	eval(rules, node, true);
+
+	switch ((*node)->kind) {
+		case NODE_INT:
+			fprintf(out, "%d", *(int*)(*node)->var1);
+			break;
+		case NODE_NAME:
+			fprintf(out, "%s", (char*)(*node)->var1);
+			break;
+		case EXPR_CODE:
+			fprintf(out, "code [%p, %d args]",
+					(void*)(*node)->var1, *((unsigned char*)(*node)->var2));
+			break;
+		case NODE_LIST:
+			if (!(*node)->var1) {
+				fprintf(out, "[]");
+			} else {
+				fprintf(out, "[");
+				fflush(out);
+				print_eval(out, rules, (struct node**) &(*node)->var1);
+				if (((struct node*)(*node)->var2)->var1) {
+					struct node *tl = (*node)->var2;
+					while (tl->var1) {
+						fprintf(out, ",");
+						fflush(out);
+						eval(rules, &tl, true);
+						print_eval(out, rules, (struct node**) &tl->var1);
+						tl = (struct node*) tl->var2;
+					}
+				}
+				fprintf(out, "]");
+			}
+			break;
+		case NODE_TUPLE:
+			fprintf(out, "(");
+			fflush(out);
+			print_eval(out, rules, (struct node**) &(*node)->var1);
+			fprintf(out, ",");
+			fflush(out);
+			print_eval(out, rules, (struct node**) &(*node)->var2);
+			fprintf(out, ")");
+			break;
+		default:
+			fprintf(out, "<unimplemented:%d>", (*node)->kind);
+			break;
+	}
+
+	fflush(out);
+}
+
+struct expression *eval_main(FILE *out, struct fuspel *rules
 #ifdef FUSPEL_DEBUG
 		, bool debug_graphs_enabled
 #endif
@@ -362,7 +413,12 @@ struct expression *eval_main(struct fuspel *rules
 	main_node->var1 = my_calloc(1, 5);
 	strcpy(main_node->var1, "main");
 
-	eval(rules, &main_node, 0);
+	if (!out) {
+		eval(rules, &main_node, false);
+	} else {
+		print_eval(out, rules, &main_node);
+		fprintf(out, "\n");
+	}
 
 	cpy_node_to_expression(expr, main_node);
 
