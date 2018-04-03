@@ -33,3 +33,8 @@ map f [x:xs] = [f x:map f xs];
 take _ []     = [];
 take 0 _      = [];
 take n [x:xs] = [x:take (sub 1 n) xs];
+
+scan op r []    = [r];
+scan op r [a:x] = [r:scan op (op r a) x];
+
+iterate f x = [x:iterate f (f x)];

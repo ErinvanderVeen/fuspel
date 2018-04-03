@@ -8,3 +8,6 @@ gt a b = code gt a b;
 le a b = code le a b;
 lt a b = code lt a b;
 ne a b = code ne a b;
+
+pow _ 0 = 1;
+pow x n = mul x (pow x (sub 1 n));
