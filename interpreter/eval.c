@@ -388,8 +388,15 @@ void print_eval(FILE *out, struct fuspel *rules, struct node **node) {
 			print_eval(out, rules, (struct node**) &(*node)->var2);
 			fprintf(out, ")");
 			break;
+		case NODE_APP:
+			print_eval(out, rules, (struct node**) &(*node)->var1);
+			fprintf(out, " (");
+			fflush(out);
+			print_eval(out, rules, (struct node**) &(*node)->var2);
+			fprintf(out, ")");
+			break;
 		default:
-			fprintf(out, "<unimplemented:%d>", (*node)->kind);
+			fprintf(out, "<print_eval unimplemented case:%d>", (*node)->kind);
 			break;
 	}
 
