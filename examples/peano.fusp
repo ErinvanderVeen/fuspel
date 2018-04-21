@@ -1,0 +1,21 @@
+import bool;
+import int;
+
+fix f = fixb f (fixb f);
+fixb f x = f (x x);
+
+main = peano_to_int (fix padd (int_to_peano 5) (int_to_peano 10));
+
+pzero (0,_) = 1;
+pzero _     = 0;
+
+pinc n = (1,n);
+pdec (1,n) = n;
+
+peano_to_int (0,_) = 0;
+peano_to_int (1,n) = add 1 (peano_to_int n);
+
+int_to_peano 0 = (0,0);
+int_to_peano n = (1,int_to_peano (sub 1 n));
+
+padd a m n = if (pzero n) m (pinc (a m (pdec n)));
