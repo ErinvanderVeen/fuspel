@@ -204,8 +204,8 @@ void print_node_to_file(struct node *node, FILE *f, struct visited_nodes *visite
 
 	switch (node->kind) {
 		case NODE_INT:
-			fprintf(f, "%" PRIuPTR " [shape=diamond,label=\"%d\"];\n",
-					(uintptr_t) node, *((int*) node->var1));
+			fprintf(f, "%" PRIuPTR " [shape=diamond,label=\"%ld\"];\n",
+					(uintptr_t) node, (INT) node->var1);
 			break;
 
 		case NODE_NAME:
